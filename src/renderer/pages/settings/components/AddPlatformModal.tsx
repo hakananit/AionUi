@@ -18,7 +18,6 @@ import {
   detectNewApiProtocol,
   getPlatformByValue,
   isCustomOption,
-  isGeminiPlatform,
   isNewApiPlatform,
   type PlatformConfig,
 } from '@/renderer/utils/model/modelPlatforms';
@@ -227,11 +226,10 @@ const AddPlatformModal = ModalHOC<{
   // 获取当前选中的平台配置 / Get current selected platform config
   const selectedPlatform = useMemo(() => getPlatformByValue(platformValue), [platformValue]);
 
-  const platform = selectedPlatform?.platform ?? 'gemini';
+  const platform = selectedPlatform?.platform ?? 'custom';
   // 判断是否为"自定义"选项（没有预设 baseUrl） / Check if "Custom" option (no preset baseUrl)
   const isCustom = isCustomOption(platformValue);
   const isBedrock = platform === 'bedrock';
-  const isGemini = isGeminiPlatform(platform);
   const isNewApi = isNewApiPlatform(platform);
 
   // new-api 每模型协议选择状态 / new-api per-model protocol selection state
@@ -310,20 +308,13 @@ const AddPlatformModal = ModalHOC<{
       // Pre-fill from deep link data (aionui:// protocol)
       if (deepLinkData?.baseUrl || deepLinkData?.apiKey) {
         // Default to new-api platform for deep links (typical one-api/new-api usage)
-        form.setFieldValue('platform', deepLinkData.platform || 'new-api');
-        if (deepLinkData.baseUrl) form.setFieldValue('baseUrl', deepLinkData.baseUrl);
-        if (deepLinkData.apiKey) form.setFieldValue('apiKey', deepLinkData.apiKey);
+        form.setFieldValue('platform', 'custom');
       } else {
-        form.setFieldValue('platform', 'gemini');
+        form.setFieldValue('platform', 'custom');
       }
     }
   }, [modalProps.visible, deepLinkData]);
 
-  useEffect(() => {
-    if (platform?.includes('gemini')) {
-      void modelListState.mutate();
-    }
-  }, [platform]);
 
   // 处理自动修复的 base_url / Handle auto-fixed base_url
   useEffect(() => {
@@ -404,7 +395,7 @@ const AddPlatformModal = ModalHOC<{
         <Form form={form} layout='vertical' className='[&_.arco-form-item]:mb-12px [&_.arco-form-item:last-child]:mb-0'>
           {/* 模型平台选择（第一层）/ Model Platform Selection (first level) */}
           <Form.Item
-            initialValue='gemini'
+            initialValue='custom'
             label={t('settings.modelPlatform')}
             field={'platform'}
             required
@@ -639,8 +630,7 @@ const AddPlatformModal = ModalHOC<{
                       }
                       return;
                     }
-                    // For Gemini, no apiKey check needed
-                    if (!isGemini && !apiKey) {
+                    if (!apiKey) {
                       message.warning(t('settings.pleaseEnterApiKey'));
                       return;
                     }

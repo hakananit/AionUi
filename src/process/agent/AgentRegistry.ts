@@ -49,79 +49,19 @@ class AgentRegistry {
   private otherAgents: DetectedAgent[] = [];
   private customAgents: AcpDetectedAgent[] = [];
 
-  private createGeminiAgent(): GeminiDetectedAgent {
-    return {
-      id: 'gemini',
-      name: 'Gemini CLI',
-      kind: 'gemini',
-      available: true,
-      backend: 'gemini',
-    };
-  }
-
-  private createAionrsAgent(): AionrsDetectedAgent {
-    return {
-      id: 'aionrs',
-      name: 'Aion CLI',
-      kind: 'aionrs',
-      available: true,
-      backend: 'aionrs',
-    };
-  }
 
   /**
    * Detect non-ACP CLI agents (openclaw-gateway, nanobot) via CLI availability.
    * Uses the same `which`/`where` check as AcpDetector.
    */
   private detectOtherCliAgents(): DetectedAgent[] {
-    const agents: DetectedAgent[] = [];
-
-    if (acpDetector.isCliAvailable('openclaw')) {
-      agents.push({
-        id: 'openclaw-gateway',
-        name: 'OpenClaw Gateway',
-        kind: 'openclaw-gateway',
-        available: true,
-        backend: 'openclaw-gateway',
-        cliPath: 'openclaw',
-      } satisfies OpenClawDetectedAgent);
-    }
-
-    if (acpDetector.isCliAvailable('nanobot')) {
-      agents.push({
-        id: 'nanobot',
-        name: 'Nanobot',
-        kind: 'nanobot',
-        available: true,
-        backend: 'nanobot',
-        cliPath: 'nanobot',
-      } satisfies NanobotDetectedAgent);
-    }
-
-    return agents;
+    // Disabled for lockdown
+    return [];
   }
 
   private async loadRemoteAgents(): Promise<RemoteDetectedAgent[]> {
-    try {
-      // Dynamic import to avoid circular dependency at module load time
-      const { getDatabase } = await import('@process/services/database');
-      const db = await getDatabase();
-      const configs: RemoteAgentConfig[] = db.getRemoteAgents();
-      return configs.map((config) => ({
-        id: `remote:${config.id}`,
-        name: config.name,
-        kind: 'remote' as const,
-        available: true,
-        backend: 'remote',
-        remoteAgentId: config.id,
-        url: config.url,
-        protocol: config.protocol,
-        authType: config.authType,
-      }));
-    } catch (error) {
-      console.error('[AgentRegistry] Failed to load remote agents:', error);
-      return [];
-    }
+    // Disabled for lockdown
+    return [];
   }
 
   /**
@@ -149,8 +89,6 @@ class AgentRegistry {
   // prettier-ignore
   private merge(): void {
     this.detectedAgents = this.deduplicate([
-      this.createAionrsAgent(),
-      this.createGeminiAgent(),
       ...this.builtinAgents,
       ...this.otherAgents,
       ...this.remoteAgents,

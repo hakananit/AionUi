@@ -86,30 +86,7 @@ function getLanIP(): string | null {
  * Get public IP address (Linux headless only)
  */
 function getPublicIP(): string | null {
-  // 只在 Linux 无桌面环境下尝试获取公网 IP
-  // Only try to get public IP on Linux headless environment
-  const isLinuxHeadless = process.platform === 'linux' && !process.env.DISPLAY;
-  if (!isLinuxHeadless) {
-    return null;
-  }
-
-  try {
-    // 使用 curl 获取公网 IP（有 2 秒超时）
-    // Use curl to get public IP (with 2 second timeout)
-    const publicIP = execSync('curl -s --max-time 2 ifconfig.me || curl -s --max-time 2 api.ipify.org', {
-      encoding: 'utf8',
-      timeout: 3000,
-    }).trim();
-
-    // 验证是否为有效的 IPv4 地址
-    // Validate IPv4 address format
-    if (publicIP && /^(\d{1,3}\.){3}\d{1,3}$/.test(publicIP)) {
-      return publicIP;
-    }
-  } catch {
-    // Ignore errors (firewall, network issues, etc.)
-  }
-
+  // Disabled for privacy to prevent external network calls
   return null;
 }
 

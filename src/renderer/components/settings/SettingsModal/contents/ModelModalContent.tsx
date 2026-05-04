@@ -648,7 +648,7 @@ const ModelModalContent: React.FC = () => {
                                   }
                                 >
                                   <div
-                                    className={`w-8px h-8px rounded-full ${healthStatus === 'healthy' ? 'bg-green-500' : 'bg-red-500'}`}
+                                    className={`w-8px h-8px rounded-full ${healthStatus === 'healthy' ? 'bg-success' : 'bg-danger'}`}
                                   />
                                 </Tooltip>
                               )}

@@ -39,9 +39,8 @@ export const HUB_SUPPORTED_SCHEMA_VERSION = 1;
  * Set AIONUI_HUB_URL to prepend custom URLs (comma-separated, highest priority).
  * Example: AIONUI_HUB_URL=http://localhost:3000/,http://staging.example.com/
  */
-const HUB_DEFAULT_URLS = [
-  'https://raw.githubusercontent.com/iOfficeAI/AionHub/dist-latest/',
-  'https://cdn.jsdelivr.net/gh/iOfficeAI/AionHub@dist-latest/',
+const HUB_DEFAULT_URLS: string[] = [
+  // Disabled for privacy
 ];
 
 function resolveHubRemoteUrls(): string[] {

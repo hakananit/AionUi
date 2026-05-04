@@ -37,23 +37,9 @@ const AgentModalContent: React.FC = () => {
     <div className='flex flex-col h-full w-full'>
       {agentMessageContext}
 
-      <Tabs
-        activeTab={activeTab}
-        onChange={handleTabChange}
-        type='line'
-        className='flex flex-col flex-1 min-h-0 [&>.arco-tabs-content]:pt-0'
-      >
-        <Tabs.TabPane key='local' title={t('settings.agentManagement.localAgents')}>
-          <AionScrollArea className='flex-1 min-h-0 pb-16px scrollbar-hide' disableOverflow={isPageMode}>
-            <LocalAgents />
-          </AionScrollArea>
-        </Tabs.TabPane>
-        <Tabs.TabPane key='remote' title={t('settings.agentManagement.remoteAgents')}>
-          <AionScrollArea className='flex-1 min-h-0 pb-16px scrollbar-hide' disableOverflow={isPageMode}>
-            <RemoteAgents />
-          </AionScrollArea>
-        </Tabs.TabPane>
-      </Tabs>
+      <AionScrollArea className='flex-1 min-h-0 pb-16px scrollbar-hide' disableOverflow={isPageMode}>
+        <LocalAgents />
+      </AionScrollArea>
     </div>
   );
 };
