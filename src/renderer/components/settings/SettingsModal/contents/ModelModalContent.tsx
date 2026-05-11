@@ -19,7 +19,6 @@ import { isNewApiPlatform, NEW_API_PROTOCOL_OPTIONS } from '@/renderer/utils/mod
 import EditModeModal from '@/renderer/pages/settings/components/EditModeModal';
 import AionScrollArea from '@/renderer/components/base/AionScrollArea';
 import { useSettingsViewMode } from '../settingsViewContext';
-import { consumePendingDeepLink } from '@/renderer/hooks/system/useDeepLink';
 import { classifyHealthCheckMessage } from './healthCheckUtils';
 import '../model-provider.css';
 
@@ -27,16 +26,8 @@ import '../model-provider.css';
  * 获取协议显示标签颜色
  * Get protocol badge color
  */
-const getProtocolColor = (protocol: string): string => {
-  switch (protocol) {
-    case 'gemini':
-      return 'blue';
-    case 'anthropic':
-      return 'orange';
-    case 'openai':
-    default:
-      return 'green';
-  }
+const getProtocolColor = (_protocol: string): string => {
+  return 'green';
 };
 
 /**
@@ -197,7 +188,7 @@ const ModelModalContent: React.FC = () => {
 
       // 1. 创建临时对话
       const conversation = await ipcBridge.conversation.create.invoke({
-        type: 'gemini',
+        type: 'acp',
         name: `[Health Check] ${platform.name} - ${modelName}`,
         model: {
           ...platform,
@@ -432,14 +423,6 @@ const ModelModalContent: React.FC = () => {
       updatePlatform(platform, () => addPlatformModalCtrl.close());
     },
   });
-
-  // Consume pending deep-link data on mount (set by useDeepLink hook before navigation)
-  useEffect(() => {
-    const pending = consumePendingDeepLink();
-    if (pending) {
-      addPlatformModalCtrl.open({ deepLinkData: pending });
-    }
-  }, [addPlatformModalCtrl]);
 
   const [addModelModalCtrl, addModelModalContext] = AddModelModal.useModal({
     onSubmit(platform) {

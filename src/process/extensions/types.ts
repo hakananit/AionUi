@@ -140,7 +140,7 @@ export const ExtensionMetaSchema = z
   })
   .strict();
 
-// ============ Field Schema (shared by ACP adapters & Channel plugins) ============
+// ============ Field Schema (for ACP adapters) ============
 
 export const ExtFieldSchema = z.object({
   key: z.string(),
@@ -153,7 +153,7 @@ export const ExtFieldSchema = z.object({
 
 // ============ ACP Adapter Schema ============
 
-export const PRESET_AGENT_TYPES = ['gemini', 'claude', 'codex', 'codebuddy', 'opencode'] as const;
+export const PRESET_AGENT_TYPES = ['acp', 'codex', 'aionrs'] as const;
 
 export const ExtAcpAdapterSchema = z
   .object({
@@ -264,17 +264,7 @@ export const ExtSkillSchema = z.object({
   file: z.string().min(1, 'Skill file path is required'),
 });
 
-// ============ Channel Plugin Schema ============
 
-export const ExtChannelPluginSchema = z.object({
-  type: z.string().min(1, 'Channel plugin type is required'),
-  name: z.string().min(1, 'Channel plugin name is required'),
-  description: z.string().optional(),
-  icon: z.string().optional(),
-  entryPoint: z.string().min(1, 'entryPoint is required'),
-  credentialFields: z.array(ExtFieldSchema).optional(),
-  configFields: z.array(ExtFieldSchema).optional(),
-});
 
 // ============ WebUI Schema ============
 
@@ -428,13 +418,7 @@ function validateContributeIds(contributes: z.infer<typeof ExtContributesSchemaB
       return `Duplicate skill names: ${[...new Set(duplicates)].join(', ')}`;
     }
   }
-  if (contributes.channelPlugins) {
-    const types = contributes.channelPlugins.map((p) => p.type);
-    const duplicates = types.filter((type, idx) => types.indexOf(type) !== idx);
-    if (duplicates.length > 0) {
-      return `Duplicate channel plugin types: ${[...new Set(duplicates)].join(', ')}`;
-    }
-  }
+
   if (contributes.themes) {
     const ids = contributes.themes.map((t) => t.id);
     const duplicates = ids.filter((id, idx) => ids.indexOf(id) !== idx);
@@ -487,7 +471,7 @@ const ExtContributesSchemaBase = z.object({
   /** Agent presets — structurally identical to assistants but semantically represent autonomous agents (e.g. leis, openfang, opencode style) */
   agents: z.array(ExtAssistantSchema).optional(),
   skills: z.array(ExtSkillSchema).optional(),
-  channelPlugins: z.array(ExtChannelPluginSchema).optional(),
+
   webui: ExtWebuiSchema.optional(),
   themes: z.array(ExtThemeSchema).optional(),
   settingsTabs: z.array(ExtSettingsTabSchema).optional(),
@@ -515,7 +499,7 @@ export type ExtMcpServer = z.infer<typeof ExtMcpServerSchema>;
 export type ExtAssistant = z.infer<typeof ExtAssistantSchema>;
 export type ExtAgent = z.infer<typeof ExtAssistantSchema>;
 export type ExtSkill = z.infer<typeof ExtSkillSchema>;
-export type ExtChannelPlugin = z.infer<typeof ExtChannelPluginSchema>;
+
 export type ExtTheme = z.infer<typeof ExtThemeSchema>;
 export type ExtWebui = z.infer<typeof ExtWebuiSchema>;
 export type ExtSettingsTab = z.infer<typeof ExtSettingsTabSchema>;

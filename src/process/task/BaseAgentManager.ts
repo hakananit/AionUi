@@ -116,6 +116,10 @@ class BaseAgentManager<Data, ConfirmationOption extends any = any>
     });
   }
 
+  kill(_reason?: import('./IAgentManager').AgentKillReason) {
+    super.kill();
+  }
+
   sendMessage(data: any) {
     this._lastActivityAt = Date.now();
     return this.postMessagePromise('send.message', data);

@@ -121,7 +121,7 @@ export const useGuidAgentSelection = ({
     _setSelectedAcpModel((prev) => {
       const newModelId = typeof modelId === 'function' ? modelId(prev) : modelId;
       const agentKey = selectedAgentRef.current;
-      if (agentKey && agentKey !== 'gemini' && agentKey !== 'custom' && newModelId) {
+      if (agentKey && agentKey !== 'custom' && newModelId) {
         void savePreferredModelId(agentKey, newModelId);
       }
       return newModelId;
@@ -173,7 +173,7 @@ export const useGuidAgentSelection = ({
       const assistant = customAgents.find((a) => a.id === customAgentId);
       if (assistant) {
         return {
-          backend: assistant.presetAgentType || 'gemini',
+          backend: assistant.presetAgentType || 'aionrs',
           name: assistant.name,
           customAgentId: assistant.id,
           isPreset: true,
@@ -399,11 +399,7 @@ export const useGuidAgentSelection = ({
         let preferred: string | undefined;
         let yoloMode = false;
 
-        if (configKey === 'gemini') {
-          const config = await ConfigStorage.get('gemini.config');
-          preferred = config?.preferredMode;
-          yoloMode = config?.yoloMode ?? false;
-        } else if (configKey === 'aionrs') {
+        if (configKey === 'aionrs') {
           const config = await ConfigStorage.get('aionrs.config');
           preferred = config?.preferredMode;
         } else {
@@ -428,7 +424,6 @@ export const useGuidAgentSelection = ({
         if (yoloMode) {
           const yoloValues: Record<string, string> = {
             claude: 'bypassPermissions',
-            gemini: 'yolo',
             codex: 'yolo',
             qwen: 'yolo',
           };

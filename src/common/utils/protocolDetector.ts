@@ -157,39 +157,6 @@ interface ProtocolSignature {
  * Reference GPT-Load Channel design, each protocol defines its signatures
  */
 export const PROTOCOL_SIGNATURES: ProtocolSignature[] = [
-  // Gemini 协议
-  {
-    protocol: 'gemini',
-    // Gemini API Key 格式：AIza 开头，后跟 35 个字符
-    // Gemini API Key format: starts with AIza, followed by 35 characters
-    keyPattern: /^AIza[A-Za-z0-9_-]{35}$/,
-    urlPatterns: [
-      /generativelanguage\.googleapis\.com/, // 标准 Gemini API
-      /aiplatform\.googleapis\.com/, // Vertex AI
-      /gemini\.google\.com/, // Gemini 网页版
-      /aistudio\.google\.com/, // AI Studio
-    ],
-    endpoints: [
-      {
-        path: '/v1beta/models',
-        method: 'GET',
-        headers: () => ({}),
-        validator: (response, status) => {
-          if (status !== 200) return false;
-          return response?.models && Array.isArray(response.models);
-        },
-      },
-      {
-        path: '/v1/models',
-        method: 'GET',
-        headers: () => ({}),
-        validator: (response, status) => {
-          if (status !== 200) return false;
-          return response?.models && Array.isArray(response.models);
-        },
-      },
-    ],
-  },
   // OpenAI 协议（包括兼容服务）
   {
     protocol: 'openai',
@@ -249,39 +216,6 @@ export const PROTOCOL_SIGNATURES: ProtocolSignature[] = [
       },
     ],
   },
-  // Anthropic 协议
-  {
-    protocol: 'anthropic',
-    // Anthropic Key 格式：sk-ant- 开头
-    keyPattern: /^sk-ant-[A-Za-z0-9-]{80,}$/,
-    urlPatterns: [
-      /api\.anthropic\.com/, // Anthropic 官方
-      /claude\.ai/, // Claude 网页版
-    ],
-    endpoints: [
-      {
-        // Anthropic 没有 models 端点，使用 messages 端点测试
-        // Anthropic doesn't have models endpoint, use messages endpoint
-        path: '/v1/messages',
-        method: 'POST',
-        headers: (apiKey) => ({
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'Content-Type': 'application/json',
-        }),
-        body: {
-          model: 'claude-3-haiku-20240307',
-          max_tokens: 1,
-          messages: [{ role: 'user', content: 'test' }],
-        },
-        validator: (_response, status) => {
-          // 200 或 400（参数错误但认证成功）都认为是有效的
-          // 200 or 400 (param error but auth success) are both valid
-          return status === 200 || status === 400;
-        },
-      },
-    ],
-  },
 ];
 
 /**
@@ -293,8 +227,6 @@ export const PROTOCOL_SIGNATURES: ProtocolSignature[] = [
  */
 export const THIRD_PARTY_KEY_PATTERNS: Array<{ pattern: RegExp; name: string; protocol: ProtocolType }> = [
   { pattern: /^sk-[A-Za-z0-9-_]{20,}$/, name: 'OpenAI/Compatible', protocol: 'openai' },
-  { pattern: /^AIza[A-Za-z0-9_-]{35}$/, name: 'Google/Gemini', protocol: 'gemini' },
-  { pattern: /^sk-ant-[A-Za-z0-9-]{80,}$/, name: 'Anthropic', protocol: 'anthropic' },
   { pattern: /^gsk_[A-Za-z0-9]{52}$/, name: 'Groq', protocol: 'openai' },
   { pattern: /^pplx-[A-Za-z0-9]{48}$/, name: 'Perplexity', protocol: 'openai' },
   { pattern: /^[A-Za-z0-9]{32}$/, name: 'DeepSeek/Moonshot', protocol: 'openai' },
@@ -456,12 +388,6 @@ export function getProtocolDisplayName(protocol: ProtocolType): string {
  * 获取协议对应的推荐平台
  * Get recommended platform for protocol
  */
-export function getRecommendedPlatform(protocol: ProtocolType): string | null {
-  const platforms: Record<ProtocolType, string | null> = {
-    openai: null, // OpenAI 协议是当前项目通过 custom 支持的
-    gemini: 'gemini',
-    anthropic: 'Anthropic',
-    unknown: null,
-  };
-  return platforms[protocol];
+export function getRecommendedPlatform(_protocol: ProtocolType): string | null {
+  return null;
 }

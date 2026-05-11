@@ -16,17 +16,6 @@ const modelCapabilitiesCache = new Map<string, boolean | undefined>();
  * 特定 provider 的能力规则
  */
 const PROVIDER_CAPABILITY_RULES: Record<string, Record<ModelType, boolean | null>> = {
-  anthropic: {
-    text: true,
-    vision: true,
-    function_calling: true,
-    image_generation: false,
-    web_search: false,
-    reasoning: false,
-    embedding: false,
-    rerank: false,
-    excludeFromPrimary: false,
-  },
   deepseek: {
     text: true,
     vision: null,

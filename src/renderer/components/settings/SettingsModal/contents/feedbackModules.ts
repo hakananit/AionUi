@@ -42,11 +42,6 @@ export const FEEDBACK_MODULES: readonly FeedbackModule[] = [
     tag: 'skills-plugin',
   },
   {
-    i18nKey: 'settings.bugReportModuleChannel',
-    descriptionI18nKey: 'settings.bugReportModuleChannelDescription',
-    tag: 'channel',
-  },
-  {
     i18nKey: 'settings.bugReportModuleChat',
     descriptionI18nKey: 'settings.bugReportModuleChatDescription',
     tag: 'conversation-session',
@@ -62,19 +57,9 @@ export const FEEDBACK_MODULES: readonly FeedbackModule[] = [
     tag: 'workspace-preview',
   },
   {
-    i18nKey: 'settings.bugReportModuleWebui',
-    descriptionI18nKey: 'settings.bugReportModuleWebuiDescription',
-    tag: 'webui-remote',
-  },
-  {
     i18nKey: 'settings.bugReportModuleScheduledTask',
     descriptionI18nKey: 'settings.bugReportModuleScheduledTaskDescription',
     tag: 'scheduled-task',
-  },
-  {
-    i18nKey: 'settings.bugReportModuleAgentTeam',
-    descriptionI18nKey: 'settings.bugReportModuleAgentTeamDescription',
-    tag: 'agent-team',
   },
   {
     i18nKey: 'settings.bugReportModuleDisplaySettings',

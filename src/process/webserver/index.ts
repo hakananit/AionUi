@@ -12,6 +12,8 @@ import { execSync } from 'child_process';
 import { networkInterfaces } from 'os';
 import { AuthService } from '@process/webserver/auth/service/AuthService';
 import { UserRepository } from '@process/webserver/auth/repository/UserRepository';
+import { WebuiService } from '@process/bridge/services/WebuiService';
+
 import { AUTH_CONFIG, SERVER_CONFIG } from './config/constants';
 import { initWebAdapter } from './adapter';
 import { setupBasicMiddleware, setupCors, setupErrorHandler } from './setup';
@@ -58,28 +60,7 @@ export function clearInitialAdminPassword(): void {
   initialAdminPassword = null;
 }
 
-/**
- * 获取局域网 IP 地址
- * Get LAN IP address using os.networkInterfaces()
- */
-function getLanIP(): string | null {
-  const nets = networkInterfaces();
-  for (const name of Object.keys(nets)) {
-    const netInfo = nets[name];
-    if (!netInfo) continue;
 
-    for (const iface of netInfo) {
-      // 跳过内部地址（127.0.0.1）和 IPv6
-      // Skip internal addresses (127.0.0.1) and IPv6
-      const isIPv4 = iface.family === 'IPv4';
-      const isNotInternal = !iface.internal;
-      if (isIPv4 && isNotInternal) {
-        return iface.address;
-      }
-    }
-  }
-  return null;
-}
 
 /**
  * 获取公网 IP 地址（仅 Linux 无桌面环境）
@@ -104,7 +85,7 @@ function getServerIP(): string | null {
 
   // 2. 所有平台：获取局域网 IP（包括 Windows/Mac/Linux）
   // All platforms: get LAN IP (Windows/Mac/Linux)
-  return getLanIP();
+  return WebuiService.getLanIP();
 }
 
 /**

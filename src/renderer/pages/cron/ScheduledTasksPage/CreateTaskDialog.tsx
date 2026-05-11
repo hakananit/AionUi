@@ -240,29 +240,26 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
       .catch(() => setCachedConfigOptions(undefined));
   }, [resolvedBackend]);
 
-  const isGeminiMode = resolvedBackend === 'gemini' || resolvedBackend === 'aionrs';
+  const isAionrsMode = resolvedBackend === 'aionrs';
 
   // AionCLI does not support Google Auth — filter it out (mirrors GuidPage.tsx logic)
   const filteredProviders = useMemo(
-    () =>
-      resolvedBackend === 'aionrs'
-        ? providers.filter((p) => !p.platform?.toLowerCase().includes('gemini-with-google-auth'))
-        : providers,
-    [resolvedBackend, providers]
+    () => providers.filter((p) => !p.platform?.toLowerCase().includes('gemini-with-google-auth')),
+    [providers]
   );
 
-  // Build Gemini currentModel from modelId for GuidModelSelector
-  const geminiCurrentModel = useMemo<TProviderWithModel | undefined>(() => {
-    if ((resolvedBackend !== 'gemini' && resolvedBackend !== 'aionrs') || !modelId) return undefined;
+  // Build Aionrs currentModel from modelId for GuidModelSelector
+  const aionrsCurrentModel = useMemo<TProviderWithModel | undefined>(() => {
+    if (!isAionrsMode || !modelId) return undefined;
     for (const p of filteredProviders) {
       if (getAvailableModels(p).includes(modelId)) {
         return { ...p, useModel: modelId } as TProviderWithModel;
       }
     }
     return undefined;
-  }, [resolvedBackend, modelId, filteredProviders, getAvailableModels]);
+  }, [isAionrsMode, modelId, filteredProviders, getAvailableModels]);
 
-  const handleGeminiModelSelect = useCallback(async (model: TProviderWithModel) => {
+  const handleAionrsModelSelect = useCallback(async (model: TProviderWithModel) => {
     setModelId(model.useModel);
   }, []);
 
@@ -278,7 +275,7 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
 
   // Load ACP cached model info when backend changes
   useEffect(() => {
-    if (!resolvedBackend || resolvedBackend === 'gemini' || resolvedBackend === 'aionrs') {
+    if (!resolvedBackend || resolvedBackend === 'aionrs') {
       setAcpCachedModelInfo(null);
       return;
     }
@@ -293,14 +290,7 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
   // Set default modelId from user preferences when backend changes
   useEffect(() => {
     if (!resolvedBackend || modelId) return;
-    if (resolvedBackend === 'gemini') {
-      ConfigStorage.get('gemini.defaultModel')
-        .then((saved) => {
-          const preferred = typeof saved === 'string' ? saved : saved?.useModel;
-          if (preferred) setModelId(preferred);
-        })
-        .catch(() => {});
-    } else if (resolvedBackend === 'aionrs') {
+    if (resolvedBackend === 'aionrs') {
       ConfigStorage.get('aionrs.defaultModel')
         .then((saved) => {
           if (saved?.useModel) setModelId(saved.useModel);
@@ -356,7 +346,7 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
 
   const selectedExecutionModeOption =
     executionModeOptions.find((option) => option.value === executionMode) ?? executionModeOptions[0];
-  const showModelSelector = Boolean(resolvedBackend && (isGeminiMode || acpCachedModelInfo));
+  const showModelSelector = Boolean(resolvedBackend && (isAionrsMode || acpCachedModelInfo));
   const showConfigSelector = resolvedBackend === 'codex';
   const advancedFieldCount = Number(showModelSelector) + Number(showConfigSelector) + 1;
 
@@ -719,10 +709,10 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
                       {t('cron.page.form.model')}
                     </label>
                     <GuidModelSelector
-                      isGeminiMode={isGeminiMode}
+                      isGeminiMode={isAionrsMode}
                       modelList={filteredProviders}
-                      currentModel={geminiCurrentModel}
-                      setCurrentModel={handleGeminiModelSelect}
+                      currentModel={aionrsCurrentModel}
+                      setCurrentModel={handleAionrsModelSelect}
                       geminiModeLookup={geminiModeLookup}
                       currentAcpCachedModelInfo={acpCachedModelInfo}
                       selectedAcpModel={modelId ?? null}

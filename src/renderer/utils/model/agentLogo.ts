@@ -18,7 +18,6 @@ import CursorLogo from '@/renderer/assets/logos/tools/coding/cursor.png';
  * Agent Logo mapping table
  */
 const AGENT_LOGO_MAP = {
-  aionrs: AionLogo,
   cursor: CursorLogo,
 } as const satisfies Record<string, string>;
 

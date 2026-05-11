@@ -24,7 +24,7 @@ import { ACP_METHODS, JSONRPC_VERSION, parseInitializeResult } from '@/common/ty
 import type { ChildProcess } from 'child_process';
 import type { AcpSessionMcpServer } from './mcpSessionConfig';
 import path from 'path';
-import { connectClaude, connectCodebuddy, connectCodex, spawnGenericBackend } from './acpConnectors';
+import { connectCodex, spawnGenericBackend } from './acpConnectors';
 import type { SpawnResult } from './acpConnectors';
 import { killChild, readTextFile, writeJsonRpcMessage, writeTextFile } from './utils';
 
@@ -167,7 +167,7 @@ export class AcpConnection {
 
   // 通用的后端连接方法
   private async connectGenericBackend(
-    backend: Exclude<AcpBackend, 'claude' | 'codebuddy' | 'codex'>,
+    backend: Exclude<AcpBackend, 'codex'>,
     cliPath: string,
     workingDir: string,
     acpArgs?: string[],
@@ -220,14 +220,6 @@ export class AcpConnection {
     };
 
     switch (backend) {
-      case 'claude':
-        await connectClaude(workingDir, npxHooks);
-        break;
-
-      case 'codebuddy':
-        await connectCodebuddy(workingDir, npxHooks);
-        break;
-
       case 'codex':
         await connectCodex(workingDir, npxHooks);
         break;

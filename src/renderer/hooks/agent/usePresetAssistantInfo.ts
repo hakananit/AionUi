@@ -34,7 +34,6 @@ type AssistantLike = {
  * 处理向后兼容：
  * - presetAssistantId: 新格式 'builtin-xxx'
  * - customAgentId: ACP 会话的旧格式
- * - enabledSkills: Gemini Cowork 会话的旧格式
  */
 /**
  * Resolve the assistant config ID (preserving original prefix like 'builtin-').
@@ -72,14 +71,6 @@ export function resolvePresetId(conversation: TChatConversation): string | null 
   if (customAgentId) {
     const resolved = customAgentId.replace('builtin-', '');
     return resolved;
-  }
-
-  // 3. 向后兼容：enabledSkills 存在说明是 Cowork 会话（Gemini 旧会话）
-  // Backward compatible: enabledSkills means Cowork conversation (Gemini old conversations)
-  // 只有在既没有 presetAssistantId 也没有 customAgentId 时才使用此逻辑
-  // Only use this logic when both presetAssistantId and customAgentId are absent (including empty strings)
-  if (conversation.type === 'gemini' && !presetAssistantId && !customAgentId && enabledSkills.length > 0) {
-    return 'cowork';
   }
 
   return null;
@@ -323,29 +314,8 @@ export function usePresetAssistantInfo(conversation: TChatConversation | undefin
     ipcBridge.extensions.getAcpAdapters.invoke().catch(() => [] as Record<string, unknown>[])
   );
 
-  // Fetch remote agents for remote conversations
-  const remoteAgentId =
-    conversation?.type === 'remote' ? (conversation.extra as { remoteAgentId?: string })?.remoteAgentId : undefined;
-  const { data: remoteAgent, isLoading: isLoadingRemoteAgent } = useSWR(
-    remoteAgentId ? `remote-agent.get.${remoteAgentId}` : null,
-    () => (remoteAgentId ? ipcBridge.remoteAgent.get.invoke({ id: remoteAgentId }) : null)
-  );
-
   return useMemo(() => {
     if (!conversation) return { info: null, isLoading: false };
-
-    // Handle remote agent conversations
-    if (conversation.type === 'remote' && remoteAgentId) {
-      if (isLoadingRemoteAgent) return { info: null, isLoading: true };
-      if (remoteAgent) {
-        const normalized = normalizeAvatar(remoteAgent.avatar);
-        return {
-          info: { name: remoteAgent.name, logo: normalized.logo, isEmoji: normalized.isEmoji },
-          isLoading: false,
-        };
-      }
-      return { info: null, isLoading: false };
-    }
 
     const presetId = resolvePresetId(conversation);
     const locale = i18n.language || 'en-US';
@@ -431,8 +401,6 @@ export function usePresetAssistantInfo(conversation: TChatConversation | undefin
     isLoadingExtAssistants,
     extensionAcpAdapters,
     isLoadingExtAdapters,
-    remoteAgentId,
-    remoteAgent,
-    isLoadingRemoteAgent,
+    isLoadingExtAdapters,
   ]);
 }

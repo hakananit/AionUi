@@ -29,7 +29,7 @@ export const BINARY_MIME_MAP: Record<string, string> = {
  * Decode a base64 data URL into a Blob.
  *
  * Uses in-memory atob() decoding instead of fetch() to avoid CSP connect-src
- * restrictions that block `fetch('data:...')` in WebUI mode.
+ * restrictions that may block `fetch('data:...')`.
  */
 export function base64ToBlob(dataUrl: string, mimeType: string): Blob {
   const base64 = dataUrl.split(',')[1] ?? '';

@@ -57,7 +57,7 @@ export const formatFilesForMessage = (files: string[]): string => {
 
 /**
  * 共享的SendBox文件处理逻辑
- * 消除ACP、Gemini、GUID三个组件间的代码重复
+ * 消除ACP、GUID两个组件间的代码重复
  */
 export const useSendBoxFiles = ({ atPath, uploadFile, setAtPath, setUploadFile }: UseSendBoxFilesProps) => {
   // 处理拖拽或粘贴的文件

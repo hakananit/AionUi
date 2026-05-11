@@ -35,7 +35,7 @@ import { getEnhancedEnv, normalizeNpxArgsForBundledBun, resolveNpxPath } from '@
 import { readClaudeModelInfoFromCcSwitch } from '@process/services/ccSwitchModelSource';
 import { AcpConnection } from './AcpConnection';
 import { AcpApprovalStore, createAcpApprovalKey } from './ApprovalStore';
-import { CLAUDE_YOLO_SESSION_MODE, CODEBUDDY_YOLO_SESSION_MODE, QWEN_YOLO_SESSION_MODE } from './constants';
+import { CURSOR_YOLO_SESSION_MODE } from './constants';
 import { buildAcpModelInfo } from './modelInfo';
 import { buildBuiltinAcpSessionMcpServers, buildTeamMcpServer, type AcpSessionMcpServer } from './mcpSessionConfig';
 import { getClaudeModelSlot } from './utils';
@@ -335,12 +335,10 @@ export class AcpAgent {
 
       // YOLO mode: bypass all permission checks for supported backends
       if (this.extra.yoloMode) {
-        const yoloModeMap: Partial<Record<AcpBackend, string>> = {
-          claude: CLAUDE_YOLO_SESSION_MODE,
-          codebuddy: CODEBUDDY_YOLO_SESSION_MODE,
-          qwen: QWEN_YOLO_SESSION_MODE,
+        const yoloModes: Record<string, string | undefined> = {
+          cursor: CURSOR_YOLO_SESSION_MODE,
         };
-        const sessionMode = yoloModeMap[this.extra.backend];
+        const sessionMode = yoloModes[this.extra.backend];
         if (sessionMode) {
           await this.applySessionMode(sessionMode, true, `${this.extra.backend} YOLO mode`);
         }
@@ -350,34 +348,8 @@ export class AcpAgent {
         await this.applySessionMode(this.extra.sessionMode, false, `session mode`);
       }
 
-      // For Claude backend, keep runtime model selection aligned with the
-      // local Claude slot model (`default` / `opus` / `haiku`).
-      // Do not send the relay's underlying model name (for example glm-5.1x)
-      // to ACP, because claude-agent-acp only accepts slot ids.
-      if (this.extra.backend === 'claude') {
-        const configuredModel = readClaudeModelInfoFromCcSwitch()?.currentModelId ?? getClaudeModelSlot();
-        if (configuredModel) {
-          try {
-            const modelStart = Date.now();
-            await this.connection.setModel(configuredModel);
-            console.log(`[ACP-PERF] start: model set ${Date.now() - modelStart}ms`);
-          } catch (error) {
-            const errMsg = error instanceof Error ? error.message : String(error);
-            console.warn(`[ACP] Failed to set Claude slot model "${configuredModel}": ${errMsg}`);
-            // Detect third-party relay/proxy errors (e.g., NewAPI/OneAPI "model_not_found").
-            // These services route by the underlying model mapped to the selected slot.
-            // Emit a visible warning so the user knows to update the relay-side mapping.
-            if (errMsg.includes('model_not_found') || errMsg.includes('无可用渠道')) {
-              this.emitErrorMessage(
-                `Claude slot "${configuredModel}" could not be activated on your API relay service. ` +
-                  `Please check the model mapping in cc-switch or ~/.claude/settings.json. ` +
-                  `Falling back to the relay's default Claude slot.`
-              );
-            }
-          }
-        }
-      } else if (this.extra.currentModelId) {
-        // For non-claude backends (e.g. gemini-cli), apply the model configured in
+      if (this.extra.currentModelId) {
+        // For non-cursor backends (e.g. qwen-agent), apply the model configured in
         // channel settings or persisted from a prior user model switch.
         try {
           await this.connection.setModel(this.extra.currentModelId);
@@ -480,11 +452,10 @@ export class AcpAgent {
     this.extra.yoloMode = true;
 
     if (this.connection.isConnected && this.connection.hasActiveSession) {
-      const yoloModeMap: Partial<Record<AcpBackend, string>> = {
-        claude: CLAUDE_YOLO_SESSION_MODE,
-        qwen: QWEN_YOLO_SESSION_MODE,
+      const yoloModes: Record<string, string | undefined> = {
+        cursor: CURSOR_YOLO_SESSION_MODE,
       };
-      const sessionMode = yoloModeMap[this.extra.backend];
+      const sessionMode = yoloModes[this.extra.backend];
       if (sessionMode) {
         await this.connection.setSessionMode(sessionMode);
       }
@@ -709,21 +680,6 @@ export class AcpAgent {
             );
           }
         }
-      }
-
-      // Inject model switch notice for Claude backend.
-      // In terminal, "/model X" output appears in conversation so the AI knows about
-      // the switch. In ACP mode set_model is silent, so we prepend an equivalent notice.
-      if (this.pendingModelSwitchNotice && this.extra.backend === 'claude') {
-        const modelNotice =
-          `<system-reminder>\n` +
-          `Model switch: The active model has been changed to ${this.pendingModelSwitchNotice} via the /model command. ` +
-          `You are now running as ${this.pendingModelSwitchNotice}. ` +
-          `The ANTHROPIC_MODEL environment variable and the earlier "You are powered by" text in the system prompt are stale (cached from session start) and no longer reflect the actual model. ` +
-          `When asked which model you are, answer ${this.pendingModelSwitchNotice}.\n` +
-          `</system-reminder>\n\n`;
-        processedContent = modelNotice + processedContent;
-        this.pendingModelSwitchNotice = null;
       }
 
       // Re-read timeout config before each prompt so changes take effect immediately
@@ -1679,63 +1635,6 @@ export class AcpAgent {
     }
   }
 
-  private async ensureBackendAuth(backend: AcpBackend, loginArg: string): Promise<void> {
-    try {
-      this.emitStatusMessage('connecting');
-
-      // 使用配置的 CLI 路径调用 login 命令
-      if (!this.extra.cliPath) {
-        throw new Error(`No CLI path configured for ${backend} backend`);
-      }
-
-      // 使用与 AcpConnection 相同的命令解析逻辑
-      const cleanEnv = getEnhancedEnv();
-      let command: string;
-      let args: string[];
-
-      if (this.extra.cliPath.startsWith('npx ')) {
-        // Route legacy npx launchers through bundled bun.
-        const parts = this.extra.cliPath.split(' ');
-        command = resolveNpxPath(cleanEnv);
-        args = ['x', '--bun', ...normalizeNpxArgsForBundledBun(parts.slice(1)), loginArg];
-      } else {
-        // For regular paths like '/usr/local/bin/qwen' or '/usr/local/bin/claude'
-        command = this.extra.cliPath;
-        args = [loginArg];
-      }
-
-      const loginProcess = spawn(command, args, {
-        stdio: 'pipe',
-        timeout: 70000,
-        env: cleanEnv,
-      });
-
-      await new Promise<void>((resolve, reject) => {
-        loginProcess.on('close', (code) => {
-          if (code === 0) {
-            resolve();
-          } else {
-            reject(new Error(`${backend} login failed with code ${code}`));
-          }
-        });
-
-        loginProcess.on('error', reject);
-      });
-    } catch (error) {
-      console.warn(`${backend} auth refresh failed, will try to connect anyway:`, error);
-      // 不抛出错误，让连接尝试继续
-    }
-  }
-
-  private async ensureQwenAuth(): Promise<void> {
-    if (this.extra.backend !== 'qwen') return;
-    await this.ensureBackendAuth('qwen', 'login');
-  }
-
-  private async ensureClaudeAuth(): Promise<void> {
-    if (this.extra.backend !== 'claude') return;
-    await this.ensureBackendAuth('claude', '/login');
-  }
 
   private async performAuthentication(): Promise<void> {
     try {
@@ -1756,13 +1655,7 @@ export class AcpAgent {
         // 需要鉴权，进行条件化"预热"尝试
       }
 
-      // 条件化预热：仅在需要鉴权时尝试调用后端CLI登录以刷新token
-      if (this.extra.backend === 'qwen') {
-        await this.ensureQwenAuth();
-      } else if (this.extra.backend === 'claude') {
-        await this.ensureClaudeAuth();
-      }
-      // Note: CodeBuddy does not have a CLI login command; auth is handled by the CLI itself
+      // Note: Backends like Cursor handle authentication internally or via separate login commands.
 
       // 预热后重试创建session（同时尝试恢复会话）
       // Retry creating/resuming session after warmup

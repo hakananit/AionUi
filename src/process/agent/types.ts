@@ -5,17 +5,6 @@
  */
 
 // Re-export from canonical location in common/types
-export type {
-  DetectedAgentKind,
-  DetectedAgent,
-  AcpDetectedAgent,
-  GeminiDetectedAgent,
-  RemoteDetectedAgent,
-  AionrsDetectedAgent,
-  NanobotDetectedAgent,
-  OpenClawDetectedAgent,
-  RemoteAgentProtocol,
-  RemoteAgentAuthType,
-} from '@/common/types/detectedAgent';
+export type { DetectedAgentKind, DetectedAgent, AcpDetectedAgent } from '@/common/types/detectedAgent';
 
 export { isAgentKind } from '@/common/types/detectedAgent';

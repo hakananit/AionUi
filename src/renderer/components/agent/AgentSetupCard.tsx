@@ -24,7 +24,6 @@ import ClaudeLogo from '@/renderer/assets/logos/ai-major/claude.svg';
 import CodeBuddyLogo from '@/renderer/assets/logos/tools/coding/codebuddy.svg';
 import CodexLogo from '@/renderer/assets/logos/tools/coding/codex.svg';
 import OpenCodeLogo from '@/renderer/assets/logos/tools/coding/opencode.svg';
-import GeminiLogo from '@/renderer/assets/logos/ai-major/gemini.svg';
 import QwenLogo from '@/renderer/assets/logos/ai-china/qwen.svg';
 import DroidLogo from '@/renderer/assets/logos/brand/droid.svg';
 import GooseLogo from '@/renderer/assets/logos/tools/goose.svg';
@@ -38,7 +37,6 @@ const AGENT_LOGOS: Partial<Record<AgentBackend, string>> = {
   codebuddy: CodeBuddyLogo,
   codex: CodexLogo,
   opencode: OpenCodeLogo,
-  gemini: GeminiLogo,
   qwen: QwenLogo,
   droid: DroidLogo,
   goose: GooseLogo,
@@ -100,14 +98,13 @@ const AgentSetupCard: React.FC<AgentSetupCardProps> = ({
         }
 
         // Determine conversation type based on agent
-        // Codex uses 'codex' type, Gemini uses 'gemini' type, others use 'acp' type
-        const isGemini = agent.backend === 'gemini';
+        // Codex uses 'codex' type, others use 'acp' type
         const isCodex = agent.backend === 'codex';
-        const conversationType = isGemini ? 'gemini' : isCodex ? 'codex' : 'acp';
+        const conversationType = isCodex ? 'codex' : 'acp';
         const defaultConversationName = t('conversation.welcome.newConversation');
 
-        // Get current conversation's model info (if gemini type)
-        const currentModel = conversation.type === 'gemini' ? conversation.model : undefined;
+        // Get current conversation's model info
+        const currentModel = undefined;
         const createParams: ICreateConversationParams = {
           type: conversationType,
           model: currentModel || {
@@ -121,9 +118,11 @@ const AgentSetupCard: React.FC<AgentSetupCardProps> = ({
           extra: {
             workspace: conversation.extra?.workspace || '',
             customWorkspace: conversation.extra?.customWorkspace || false,
-            ...(isGemini
+            ...(isCodex
               ? {
-                  presetRules: ((conversation.extra as Record<string, unknown>)?.presetRules ||
+                  backend: agent.backend,
+                  cliPath: agent.cliPath,
+                  presetContext: ((conversation.extra as Record<string, unknown>)?.presetRules ||
                     (conversation.extra as Record<string, unknown>)?.presetContext) as string,
                   enabledSkills: conversation.extra?.enabledSkills,
                   presetAssistantId: conversation.extra?.presetAssistantId,
@@ -155,9 +154,7 @@ const AgentSetupCard: React.FC<AgentSetupCardProps> = ({
         // 存储初始消息，让新会话自动发送
         if (initialMessage) {
           const messageData = { input: initialMessage, files: [] as string[] };
-          if (isGemini) {
-            sessionStorage.setItem(`gemini_initial_message_${newConversation.id}`, JSON.stringify(messageData));
-          } else if (isCodex) {
+          if (isCodex) {
             sessionStorage.setItem(`codex_initial_message_${newConversation.id}`, JSON.stringify(messageData));
           } else {
             sessionStorage.setItem(`acp_initial_message_${newConversation.id}`, JSON.stringify(messageData));

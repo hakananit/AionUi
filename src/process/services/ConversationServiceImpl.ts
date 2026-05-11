@@ -9,14 +9,7 @@ import type { IConversationRepository } from '@process/services/database/IConver
 import type { TChatConversation } from '@/common/config/storage';
 import { uuid } from '@/common/utils';
 import { cronService } from './cron/cronServiceSingleton';
-import {
-  createGeminiAgent,
-  createAcpAgent,
-  createOpenClawAgent,
-  createNanobotAgent,
-  createRemoteAgent,
-  createAionrsAgent,
-} from '@process/utils/initAgent';
+import { createAcpAgent, createOpenClawAgent, createNanobotAgent, createRemoteAgent } from '@process/utils/initAgent';
 
 /**
  * Concrete implementation of IConversationService.
@@ -125,24 +118,6 @@ export class ConversationServiceImpl implements IConversationService {
     let conversation: TChatConversation;
 
     switch (params.type) {
-      case 'gemini': {
-        conversation = await createGeminiAgent(
-          params.model,
-          params.extra.workspace,
-          params.extra.defaultFiles as string[] | undefined,
-          params.extra.webSearchEngine,
-          params.extra.customWorkspace,
-          params.extra.contextFileName,
-          params.extra.presetRules,
-          params.extra.enabledSkills as string[] | undefined,
-          params.extra.presetAssistantId,
-          params.extra.sessionMode,
-          params.extra.isHealthCheck,
-          params.extra.extraSkillPaths as string[] | undefined,
-          params.extra.excludeBuiltinSkills as string[] | undefined
-        );
-        break;
-      }
       case 'acp': {
         conversation = await createAcpAgent(params as any);
         break;
@@ -157,10 +132,6 @@ export class ConversationServiceImpl implements IConversationService {
       }
       case 'remote': {
         conversation = await createRemoteAgent(params as any);
-        break;
-      }
-      case 'aionrs': {
-        conversation = await createAionrsAgent(params as any);
         break;
       }
       default: {

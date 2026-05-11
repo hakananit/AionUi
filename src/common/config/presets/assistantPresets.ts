@@ -24,7 +24,7 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   {
     id: 'word-creator',
     avatar: '📝',
-    presetAgentType: 'gemini',
+    presetAgentType: 'cursor',
     resourceDir: 'src/process/resources/assistant/word-creator',
     ruleFiles: {
       'en-US': 'word-creator.md',
@@ -73,7 +73,7 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   {
     id: 'ppt-creator',
     avatar: '📊',
-    presetAgentType: 'gemini',
+    presetAgentType: 'cursor',
     resourceDir: 'src/process/resources/assistant/ppt-creator',
     ruleFiles: {
       'en-US': 'ppt-creator.md',
@@ -121,7 +121,7 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   {
     id: 'excel-creator',
     avatar: '📈',
-    presetAgentType: 'gemini',
+    presetAgentType: 'cursor',
     resourceDir: 'src/process/resources/assistant/excel-creator',
     ruleFiles: {
       'en-US': 'excel-creator.md',
@@ -169,7 +169,7 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   {
     id: 'morph-ppt',
     avatar: '✨',
-    presetAgentType: 'gemini',
+    presetAgentType: 'cursor',
     resourceDir: 'src/process/resources/assistant/morph-ppt',
     ruleFiles: {
       'en-US': 'morph-ppt.md',
@@ -217,7 +217,7 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   {
     id: 'morph-ppt-3d',
     avatar: '🎬',
-    presetAgentType: 'gemini',
+    presetAgentType: 'cursor',
     resourceDir: 'src/process/resources/assistant/morph-ppt-3d',
     ruleFiles: {
       'en-US': 'morph-ppt-3d.md',
@@ -250,7 +250,7 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   {
     id: 'word-form-creator',
     avatar: '📋',
-    presetAgentType: 'gemini',
+    presetAgentType: 'cursor',
     resourceDir: 'src/process/resources/assistant/word-form-creator',
     ruleFiles: {
       'en-US': 'word-form-creator.md',
@@ -300,7 +300,7 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   {
     id: 'pitch-deck-creator',
     avatar: '🎯',
-    presetAgentType: 'gemini',
+    presetAgentType: 'cursor',
     resourceDir: 'src/process/resources/assistant/pitch-deck-creator',
     ruleFiles: {
       'en-US': 'pitch-deck-creator.md',
@@ -349,7 +349,7 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   {
     id: 'dashboard-creator',
     avatar: '📊',
-    presetAgentType: 'gemini',
+    presetAgentType: 'cursor',
     resourceDir: 'src/process/resources/assistant/dashboard-creator',
     ruleFiles: {
       'en-US': 'dashboard-creator.md',
@@ -370,7 +370,7 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
       'ru-RU':
         'Преобразует CSV и табличные данные в аккуратные Excel-дашборды: KPI-карточки, графики с привязкой к данным, спарклайны и условное форматирование. Масштабирует сложность под объём данных - от краткой сводки до полноценной аналитической панели.',
       'uk-UA':
-        "Перетворюйте CSV або табличні дані на професійні дашборди Excel: KPI-картки, графіки з прив'язкою до даних, спарклайни та умовне форматування. Автоматично масштабує складність під обсяг даних.",
+        "Перетворюйте CSV або табличні дані на професійні дашборди Excel: KPI-картки, графіки з прив'язкою до даних, спарклайни та умовне форматування. Автоматично масштабує складність под обсяг даних.",
     },
     promptsI18n: {
       'en-US': [
@@ -398,7 +398,7 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   {
     id: 'academic-paper',
     avatar: '📚',
-    presetAgentType: 'gemini',
+    presetAgentType: 'cursor',
     resourceDir: 'src/process/resources/assistant/academic-paper',
     ruleFiles: {
       'en-US': 'academic-paper.md',
@@ -447,7 +447,7 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   {
     id: 'financial-model-creator',
     avatar: '💰',
-    presetAgentType: 'gemini',
+    presetAgentType: 'cursor',
     resourceDir: 'src/process/resources/assistant/financial-model-creator',
     ruleFiles: {
       'en-US': 'financial-model-creator.md',
@@ -496,7 +496,7 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   {
     id: 'star-office-helper',
     avatar: '📺',
-    presetAgentType: 'gemini',
+    presetAgentType: 'cursor',
     resourceDir: 'src/process/resources/assistant/star-office-helper',
     ruleFiles: {
       'en-US': 'star-office-helper.md',
@@ -537,53 +537,9 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
     },
   },
   {
-    id: 'openclaw-setup',
-    avatar: '🦞',
-    presetAgentType: 'gemini',
-    resourceDir: 'src/process/resources/assistant/openclaw-setup',
-    ruleFiles: {
-      'en-US': 'openclaw-setup.md',
-      'zh-CN': 'openclaw-setup.zh-CN.md',
-    },
-    defaultEnabledSkills: ['openclaw-setup', 'aionui-webui-setup'],
-    nameI18n: {
-      'en-US': 'OpenClaw Setup Expert',
-      'zh-CN': 'OpenClaw 部署专家',
-      'ru-RU': 'Эксперт по настройке OpenClaw',
-      'uk-UA': 'Експерт з налаштування OpenClaw',
-    },
-    descriptionI18n: {
-      'en-US':
-        'Expert guide for installing, deploying, configuring, and troubleshooting OpenClaw. Proactively helps with setup, diagnoses issues, and provides security best practices.',
-      'zh-CN': 'OpenClaw 安装、部署、配置和故障排查专家。主动协助设置、诊断问题并提供安全最佳实践。',
-      'ru-RU':
-        'Эксперт по установке, развёртыванию, настройке и устранению неполадок OpenClaw. Помогает пройти настройку, диагностирует проблемы и подсказывает безопасные практики.',
-      'uk-UA':
-        'Експертний посібник зі встановлення, розгортання, налаштування та усунення несправностей OpenClaw. Допомагає з налаштуванням та безпекою.',
-    },
-    promptsI18n: {
-      'en-US': [
-        'Help me install OpenClaw step by step',
-        "My OpenClaw isn't working, please diagnose the issue",
-        'Configure Telegram channel for OpenClaw integration',
-      ],
-      'zh-CN': ['帮我一步步安装 OpenClaw', '我的 OpenClaw 出问题了，请帮我诊断', '为 OpenClaw 配置 Telegram 渠道'],
-      'ru-RU': [
-        'Помоги мне установить OpenClaw пошагово',
-        'Мой OpenClaw не работает, пожалуйста, диагностируй проблему',
-        'Настрой Telegram-канал для интеграции с OpenClaw',
-      ],
-      'uk-UA': [
-        'Допоможи мені встановити OpenClaw крок за кроком',
-        'Мій OpenClaw не працює, будь ласка, діагностуй проблему',
-        'Налаштувати канал Telegram для інтеграції з OpenClaw',
-      ],
-    },
-  },
-  {
     id: 'cowork',
     avatar: 'cowork.svg',
-    presetAgentType: 'gemini',
+    presetAgentType: 'cursor',
     resourceDir: 'src/process/resources/assistant/cowork',
     ruleFiles: {
       'en-US': 'cowork.md',
@@ -689,7 +645,7 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   {
     id: 'game-3d',
     avatar: '🎮',
-    presetAgentType: 'gemini',
+    presetAgentType: 'cursor',
     resourceDir: 'src/process/resources/assistant/game-3d',
     ruleFiles: {
       'en-US': 'game-3d.md',
@@ -729,7 +685,7 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   {
     id: 'ui-ux-pro-max',
     avatar: '🎨',
-    presetAgentType: 'gemini',
+    presetAgentType: 'cursor',
     resourceDir: 'src/process/resources/assistant/ui-ux-pro-max',
     ruleFiles: {
       'en-US': 'ui-ux-pro-max.md',
@@ -772,7 +728,7 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   {
     id: 'planning-with-files',
     avatar: '📋',
-    presetAgentType: 'gemini',
+    presetAgentType: 'cursor',
     resourceDir: 'src/process/resources/assistant/planning-with-files',
     ruleFiles: {
       'en-US': 'planning-with-files.md',
@@ -815,7 +771,7 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   {
     id: 'human-3-coach',
     avatar: '🧭',
-    presetAgentType: 'gemini',
+    presetAgentType: 'cursor',
     resourceDir: 'src/process/resources/assistant/human-3-coach',
     ruleFiles: {
       'en-US': 'human-3-coach.md',
@@ -862,7 +818,7 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   {
     id: 'social-job-publisher',
     avatar: '📣',
-    presetAgentType: 'gemini',
+    presetAgentType: 'cursor',
     resourceDir: 'src/process/resources/assistant/social-job-publisher',
     ruleFiles: {
       'en-US': 'social-job-publisher.md',
@@ -914,7 +870,7 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   {
     id: 'moltbook',
     avatar: '🦞',
-    presetAgentType: 'gemini',
+    presetAgentType: 'cursor',
     resourceDir: 'src/process/resources/assistant/moltbook',
     ruleFiles: {
       'en-US': 'moltbook.md',
@@ -960,7 +916,7 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   {
     id: 'beautiful-mermaid',
     avatar: '📈',
-    presetAgentType: 'gemini',
+    presetAgentType: 'cursor',
     resourceDir: 'src/process/resources/assistant/beautiful-mermaid',
     ruleFiles: {
       'en-US': 'beautiful-mermaid.md',
@@ -1003,7 +959,7 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   {
     id: 'story-roleplay',
     avatar: '📖',
-    presetAgentType: 'gemini',
+    presetAgentType: 'cursor',
     resourceDir: 'src/process/resources/assistant/story-roleplay',
     ruleFiles: {
       'en-US': 'story-roleplay.md',

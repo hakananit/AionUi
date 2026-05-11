@@ -9,16 +9,7 @@ import { getAgentLogo } from '@renderer/utils/model/agentLogo';
 import { usePresetAssistantInfo } from '@renderer/hooks/agent/usePresetAssistantInfo';
 
 const useAcpDraft = getSendBoxDraftHook('acp', { _type: 'acp', atPath: [], content: '', uploadFile: [] });
-const useGeminiDraft = getSendBoxDraftHook('gemini', { _type: 'gemini', atPath: [], content: '', uploadFile: [] });
-const useOpenClawDraft = getSendBoxDraftHook('openclaw-gateway', {
-  _type: 'openclaw-gateway',
-  atPath: [],
-  content: '',
-  uploadFile: [],
-});
-const useNanobotDraft = getSendBoxDraftHook('nanobot', { _type: 'nanobot', atPath: [], content: '', uploadFile: [] });
-const useRemoteDraft = getSendBoxDraftHook('remote', { _type: 'remote', atPath: [], content: '', uploadFile: [] });
-const useAionrsDraft = getSendBoxDraftHook('aionrs', { _type: 'aionrs', atPath: [], content: '', uploadFile: [] });
+const useCodexDraft = getSendBoxDraftHook('codex', { _type: 'codex', atPath: [], content: '', uploadFile: [] });
 
 type Props = {
   conversationId: string;
@@ -47,9 +38,6 @@ const resolveAgentTypeFromConversation = (conversation: TChatConversation): stri
   if (conversation.type === 'acp') {
     return (conversation.extra as { backend?: string } | undefined)?.backend ?? 'acp';
   }
-  if (conversation.type === 'openclaw-gateway') {
-    return (conversation.extra as { backend?: string } | undefined)?.backend ?? 'openclaw-gateway';
-  }
   return conversation.type;
 };
 
@@ -77,19 +65,11 @@ const TeamChatEmptyState: React.FC<Props> = ({ conversationId }) => {
   // `satisfies Record<DetectedAgentKind, ...>` keeps the map exhaustive — adding a new
   // DetectedAgentKind without wiring up a draft setter here becomes a typecheck error.
   const acpDraft = useAcpDraft(conversationId);
-  const geminiDraft = useGeminiDraft(conversationId);
-  const aionrsDraft = useAionrsDraft(conversationId);
-  const nanobotDraft = useNanobotDraft(conversationId);
-  const remoteDraft = useRemoteDraft(conversationId);
-  const openClawDraft = useOpenClawDraft(conversationId);
+  const codexDraft = useCodexDraft(conversationId);
   const setContentByKind = {
     acp: (text: string) => acpDraft.mutate((prev) => ({ ...prev, content: text })),
-    gemini: (text: string) => geminiDraft.mutate((prev) => ({ ...prev, content: text })),
-    aionrs: (text: string) => aionrsDraft.mutate((prev) => ({ ...prev, content: text })),
-    nanobot: (text: string) => nanobotDraft.mutate((prev) => ({ ...prev, content: text })),
-    remote: (text: string) => remoteDraft.mutate((prev) => ({ ...prev, content: text })),
-    'openclaw-gateway': (text: string) => openClawDraft.mutate((prev) => ({ ...prev, content: text })),
-  } satisfies Record<DetectedAgentKind, (text: string) => void>;
+    codex: (text: string) => codexDraft.mutate((prev) => ({ ...prev, content: text })),
+  };
 
   const fillDraft = useCallback(
     (text: string) => {

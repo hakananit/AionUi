@@ -144,16 +144,6 @@ export function rowToConversation(row: IConversationRow): TChatConversation {
     channelChatId: row.channel_chat_id,
   };
 
-  // Gemini type has model field
-  if (row.type === 'gemini' && row.model) {
-    return {
-      ...base,
-      type: 'gemini' as const,
-      extra: JSON.parse(row.extra),
-      model: JSON.parse(row.model),
-    } as TChatConversation;
-  }
-
   // ACP type
   if (row.type === 'acp') {
     return {
@@ -172,24 +162,6 @@ export function rowToConversation(row: IConversationRow): TChatConversation {
     } as TChatConversation;
   }
 
-  // OpenClaw Gateway type
-  if (row.type === 'openclaw-gateway') {
-    return {
-      ...base,
-      type: 'openclaw-gateway' as const,
-      extra: JSON.parse(row.extra),
-    } as TChatConversation;
-  }
-
-  // Nanobot type
-  if (row.type === 'nanobot') {
-    return {
-      ...base,
-      type: 'nanobot' as const,
-      extra: JSON.parse(row.extra),
-    } as TChatConversation;
-  }
-
   // Aionrs type has model field
   if (row.type === 'aionrs' && row.model) {
     return {
@@ -197,15 +169,6 @@ export function rowToConversation(row: IConversationRow): TChatConversation {
       type: 'aionrs' as const,
       extra: JSON.parse(row.extra),
       model: JSON.parse(row.model),
-    } as TChatConversation;
-  }
-
-  // Remote type
-  if (row.type === 'remote') {
-    return {
-      ...base,
-      type: 'remote' as const,
-      extra: JSON.parse(row.extra),
     } as TChatConversation;
   }
 

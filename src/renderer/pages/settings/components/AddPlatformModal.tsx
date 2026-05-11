@@ -21,7 +21,6 @@ import {
   isNewApiPlatform,
   type PlatformConfig,
 } from '@/renderer/utils/model/modelPlatforms';
-import type { DeepLinkAddProviderDetail } from '@/renderer/hooks/system/useDeepLink';
 
 /**
  * Protocol icon configurations
@@ -206,8 +205,7 @@ const renderPlatformOption = (platform: PlatformConfig, t?: (key: string) => str
 
 const AddPlatformModal = ModalHOC<{
   onSubmit: (platform: IProvider) => void;
-  deepLinkData?: DeepLinkAddProviderDetail;
-}>(({ modalProps, onSubmit, modalCtrl, deepLinkData }) => {
+}>(({ modalProps, onSubmit, modalCtrl }) => {
   const [message, messageContext] = Message.useMessage();
   const { t } = useTranslation();
   const [form] = Form.useForm();
@@ -305,16 +303,9 @@ const AddPlatformModal = ModalHOC<{
       setLastDetectionInput(null); // 重置检测记录 / Reset detection record
       setModelProtocol('openai'); // 重置协议选择 / Reset protocol selection
 
-      // Pre-fill from deep link data (aionui:// protocol)
-      if (deepLinkData?.baseUrl || deepLinkData?.apiKey) {
-        // Default to new-api platform for deep links (typical one-api/new-api usage)
-        form.setFieldValue('platform', 'custom');
-      } else {
-        form.setFieldValue('platform', 'custom');
-      }
+      form.setFieldValue('platform', 'custom');
     }
-  }, [modalProps.visible, deepLinkData]);
-
+  }, [modalProps.visible]);
 
   // 处理自动修复的 base_url / Handle auto-fixed base_url
   useEffect(() => {

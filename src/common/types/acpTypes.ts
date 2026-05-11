@@ -7,12 +7,6 @@
 export const CODEX_ACP_BRIDGE_VERSION = '0.9.5';
 export const CODEX_ACP_NPX_PACKAGE = `@zed-industries/codex-acp@${CODEX_ACP_BRIDGE_VERSION}`;
 
-export const CLAUDE_ACP_BRIDGE_VERSION = '0.29.2';
-export const CLAUDE_ACP_NPX_PACKAGE = `@agentclientprotocol/claude-agent-acp@${CLAUDE_ACP_BRIDGE_VERSION}`;
-
-export const CODEBUDDY_ACP_BRIDGE_VERSION = '2.73.0';
-export const CODEBUDDY_ACP_NPX_PACKAGE = `@tencent-ai/codebuddy-code@${CODEBUDDY_ACP_BRIDGE_VERSION}`;
-
 // ACP 后端类型定义 — 仅包含 ACP 协议相关的后端
 // ACP backend types — only ACP protocol backends
 export type AcpBackendAll =
@@ -20,7 +14,7 @@ export type AcpBackendAll =
   | 'custom'; // User-configured custom ACP agent (extension adapters)
 
 // Superset type covering all execution engine backends (ACP + non-ACP).
-export type AgentBackend = AcpBackendAll | 'remote';
+export type AgentBackend = AcpBackendAll | 'codex';
 
 /**
  * 潜在的 ACP CLI 工具列表
@@ -100,16 +94,16 @@ export const POTENTIAL_ACP_CLIS: PotentialAcpCli[] = new Proxy([] as PotentialAc
 
 /**
  * ACP 后端 Agent 配置
- * 用于内置后端（claude, gemini, qwen）和用户自定义 Agent
+ * 用于内置后端 (cursor) 和用户自定义 Agent
  *
  * Configuration for an ACP backend agent.
- * Used for both built-in backends (claude, gemini, qwen) and custom user agents.
+ * Used for both built-in backends (cursor) and custom user agents.
  */
 export interface AcpBackendConfig {
-  /** 后端唯一标识符 / Unique identifier for the backend (e.g., 'claude', 'gemini', 'custom') */
+  /** 后端唯一标识符 / Unique identifier for the backend (e.g., 'cursor', 'custom') */
   id: string;
 
-  /** UI 显示名称 / Display name shown in the UI (e.g., 'Goose', 'Claude Code') */
+  /** UI 显示名称 / Display name shown in the UI (e.g., 'Cursor Agent') */
   name: string;
 
   /** 本地化名称 / Localized names (e.g., { 'zh-CN': '...', 'en-US': '...' }) */
@@ -129,7 +123,7 @@ export interface AcpBackendConfig {
    * 仅当二进制文件名与 id 不同时需要
    *
    * CLI command name used for detection via `which` command.
-   * Example: 'goose', 'claude', 'qwen'
+   * Example: 'agent'
    * Only needed if the binary name differs from id.
    */
   cliCommand?: string;
@@ -187,15 +181,11 @@ export interface AcpBackendConfig {
   /**
    * 启用 ACP 模式时的参数
    * 不同 CLI 使用不同约定：
-   *   - ['--experimental-acp'] 用于 claude（未指定时的默认值）
-   *   - ['--acp'] 用于 qwen, auggie
-   *   - ['acp'] 用于 goose（子命令）
+   *   - ['acp'] 用于 cursor
    *
    * Arguments to enable ACP mode when spawning the CLI.
    * Different CLIs use different conventions:
-   *   - ['--experimental-acp'] for claude (default if not specified)
-   *   - ['--acp'] for qwen, auggie
-   *   - ['acp'] for goose (subcommand)
+   *   - ['acp'] for cursor
    * If not specified, defaults to ['--experimental-acp'].
    */
   acpArgs?: string[];
@@ -229,19 +219,15 @@ export interface AcpBackendConfig {
   /**
    * 此预设的主 Agent 类型（仅 isPreset=true 时生效）
    * 决定选择此预设时创建哪种类型的对话
-   * - 'gemini': 创建 Gemini 对话
-   * - 'claude': 创建使用 Claude 后端的 ACP 对话
+   * - 'cursor': 创建 Cursor 对话
    * - 'codex': 创建 Codex 对话
-   * - 任意字符串: 扩展贡献的 ACP 适配器 ID（如 'ext-buddy'）
-   * 为向后兼容默认为 'gemini'
+   * - 任意字符串: 扩展贡献的 ACP 适配器 ID
    *
    * The primary agent type for this preset (only applies when isPreset=true).
    * Determines which conversation type to create when selecting this preset.
-   * - 'gemini': Creates a Gemini conversation
-   * - 'claude': Creates an ACP conversation with Claude backend
+   * - 'cursor': Creates a Cursor conversation
    * - 'codex': Creates a Codex conversation
-   * - any string: Extension-contributed ACP adapter ID (e.g. 'ext-buddy')
-   * Defaults to 'gemini' for backward compatibility.
+   * - any string: Extension-contributed ACP adapter ID
    */
   presetAgentType?: string;
 

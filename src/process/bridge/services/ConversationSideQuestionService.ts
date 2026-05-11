@@ -191,24 +191,9 @@ export class ConversationSideQuestionService {
       return null;
     }
 
-    if (extra.backend !== 'claude') {
-      return null;
-    }
-
-    const acpConfig = await ProcessConfig.get('acp.config');
-    const backendConfig = ACP_BACKENDS_ALL[extra.backend];
-    const cliPath = extra.cliPath || acpConfig?.[extra.backend]?.cliPath || backendConfig?.cliCommand;
-    if (!cliPath?.trim()) {
-      return null;
-    }
-
-    return {
-      acpSessionId: extra.acpSessionId,
-      backend: extra.backend,
-      cliPath: cliPath.trim(),
-      customArgs: backendConfig?.acpArgs,
-      workspace: extra.workspace,
-    };
+    // Side questions were specific to legacy Claude/Codex backends that support forkSession.
+    // Cursor/Custom backends do not yet support this.
+    return null;
   }
 
   private buildAcpSideQuestionPrompt(question: string): string {

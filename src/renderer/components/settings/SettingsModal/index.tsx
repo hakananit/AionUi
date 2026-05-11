@@ -20,7 +20,6 @@ import AgentModalContent from './contents/AgentModalContent';
 import ExtensionSettingsTabContent from './contents/ExtensionSettingsTabContent';
 import ModelModalContent from './contents/ModelModalContent';
 import SystemModalContent from './contents/SystemModalContent';
-import WebuiModalContent from './contents/WebuiModalContent';
 import { SettingsViewModeProvider } from './settingsViewContext';
 
 // ==================== 常量定义 / Constants ====================
@@ -52,7 +51,7 @@ const RESIZE_DEBOUNCE_DELAY = 150;
 /**
  * 内置设置标签页类型 / Built-in settings tab type
  */
-export type BuiltinSettingTab = 'model' | 'agent' | 'webui' | 'system' | 'about';
+export type BuiltinSettingTab = 'model' | 'agent' | 'system' | 'about';
 
 /**
  * 设置标签页类型（内置 + 扩展）/ Settings tab type (built-in + extension)
@@ -114,8 +113,8 @@ export const SubModal: React.FC<SubModalProps> = ({ visible, onCancel, title, ch
 /**
  * 主设置弹窗组件 / Main settings modal component
  *
- * 提供应用的全局设置界面，包括 Gemini、模型、工具、系统和关于等多个标签页
- * Provides global settings interface with multiple tabs including Gemini, Model, Tools, System and About
+ * 提供应用的全局设置界面，包括模型、工具、系统和关于等多个标签页
+ * Provides global settings interface with multiple tabs including Model, Tools, System and About
  *
  * @features
  * - 响应式设计，移动端使用下拉菜单，桌面端使用侧边栏 / Responsive design with dropdown on mobile and sidebar on desktop
@@ -212,14 +211,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onCancel, defaul
       },
     ];
 
-    if (isDesktop) {
-      builtinItems.push({
-        key: 'webui',
-        label: t('settings.webui'),
-        icon: <Earth theme='outline' size='20' fill={iconColors.secondary} />,
-      });
-    }
-
     builtinItems.push(
       {
         key: 'system',
@@ -309,8 +300,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onCancel, defaul
         return <ModelModalContent />;
       case 'agent':
         return <AgentModalContent />;
-      case 'webui':
-        return <WebuiModalContent />;
       case 'system':
         return <SystemModalContent />;
       case 'about':

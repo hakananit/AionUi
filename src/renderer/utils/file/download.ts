@@ -19,7 +19,7 @@ function triggerBlobDownload(blob: Blob, fileName: string): void {
 }
 
 /**
- * Download a file by reading its raw bytes from disk (works in both Electron and WebUI).
+ * Download a file by reading its raw bytes from disk.
  * Uses getImageBase64 + in-memory atob decode to bypass CSP connect-src restrictions.
  */
 export async function downloadFileFromPath(filePath: string, fileName: string): Promise<void> {

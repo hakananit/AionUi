@@ -78,7 +78,7 @@ const LocalAgents: React.FC = () => {
     [mutateCustomAgents]
   );
 
-  const otherDetected = detectedAgents?.filter((a) => a.backend !== 'gemini' && a.backend !== 'aionrs') ?? [];
+  const otherDetected = detectedAgents ?? [];
 
   const openCustomAgentEditor = useCallback(() => {
     setEditingAgent(null);
@@ -102,36 +102,51 @@ const LocalAgents: React.FC = () => {
         {/* Status card for Cursor Agent */}
         <div className='flex min-h-[160px] flex-col rounded-12px border border-solid border-[var(--color-border-2)] bg-[var(--color-bg-2)] p-12px transition-all hover:border-[var(--color-border-3)] hover:shadow-sm'>
           <div className='mb-10px flex items-center justify-between'>
-             <div className='w-32px h-32px flex items-center justify-center bg-fill-2 rd-8px'>
-               <Speed theme='outline' size='20' className='text-t-secondary' />
-             </div>
-             <div className={classNames('px-6px py-2px rd-4px text-10px font-medium uppercase tracking-wider', 
-               otherDetected.some(a => a.backend === 'cursor') ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning')}>
-               {otherDetected.some(a => a.backend === 'cursor') ? t('common.detected') : t('common.notDetected')}
-             </div>
+            <div className='w-32px h-32px flex items-center justify-center bg-fill-2 rd-8px'>
+              <Speed theme='outline' size='20' className='text-t-secondary' />
+            </div>
+            <div
+              className={classNames(
+                'px-6px py-2px rd-4px text-10px font-medium uppercase tracking-wider',
+                otherDetected.some((a) => a.backend === 'cursor')
+                  ? 'bg-success/10 text-success'
+                  : 'bg-warning/10 text-warning'
+              )}
+            >
+              {otherDetected.some((a) => a.backend === 'cursor') ? t('common.detected') : t('common.notDetected')}
+            </div>
           </div>
-          
+
           <div className='flex-1'>
             <Typography.Text className='block text-14px font-600 text-t-primary mb-2px'>Cursor Agent</Typography.Text>
             <Typography.Text className='block text-11px text-t-secondary leading-16px'>
-              {otherDetected.some(a => a.backend === 'cursor') 
-                ? 'Local agent CLI is active.' 
+              {otherDetected.some((a) => a.backend === 'cursor')
+                ? 'Local agent CLI is active.'
                 : t('settings.agentManagement.cursorDetectionHint')}
             </Typography.Text>
           </div>
-          
+
           <div className='mt-10px pt-8px border-t border-t-solid border-[var(--color-border-1)] flex items-center justify-between'>
-             <span className='text-10px text-t-tertiary font-medium uppercase'>{t('common.status')}</span>
-             <div className='flex items-center gap-6px'>
-               <span className='text-10px text-t-secondary'>{otherDetected.some(a => a.backend === 'cursor') ? 'Active' : 'Missing'}</span>
-               <div className={classNames('w-6px h-6px rd-full', otherDetected.some(a => a.backend === 'cursor') ? 'bg-success' : 'bg-warning')} />
-             </div>
+            <span className='text-10px text-t-tertiary font-medium uppercase'>{t('common.status')}</span>
+            <div className='flex items-center gap-6px'>
+              <span className='text-10px text-t-secondary'>
+                {otherDetected.some((a) => a.backend === 'cursor') ? 'Active' : 'Missing'}
+              </span>
+              <div
+                className={classNames(
+                  'w-6px h-6px rd-full',
+                  otherDetected.some((a) => a.backend === 'cursor') ? 'bg-success' : 'bg-warning'
+                )}
+              />
+            </div>
           </div>
         </div>
 
-        {otherDetected.filter(a => a.backend !== 'cursor').map((agent) => (
-          <AgentCard key={agent.backend} type='detected' agent={agent} variant='grid' />
-        ))}
+        {otherDetected
+          .filter((a) => a.backend !== 'cursor')
+          .map((agent) => (
+            <AgentCard key={agent.backend} type='detected' agent={agent} variant='grid' />
+          ))}
       </div>
 
       {/* Custom Agents section */}

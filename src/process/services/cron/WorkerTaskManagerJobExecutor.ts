@@ -134,12 +134,7 @@ export class WorkerTaskManagerJobExecutor implements ICronJobExecutor {
 
     const hasSkill = await hasCronSkillFile(job.id);
     const needsSkillSuggest = job.target.executionMode === 'new_conversation' && !!workspace && !hasSkill;
-    const isGeminiLike =
-      job.metadata.agentConfig?.backend === 'gemini' || job.metadata.agentConfig?.backend === 'aionrs';
-
-    // Gemini/Aionrs: inline SKILL_SUGGEST instructions in the task prompt (single-turn).
-    // Other agents: separate follow-up message via onFirstFinish (multi-turn).
-    const messageText = this.buildMessageText(job, hasSkill, needsSkillSuggest && isGeminiLike);
+    const messageText = this.buildMessageText(job, hasSkill, false);
 
     const triggeredAt = Date.now();
     const cronMeta: CronMessageMeta = {
@@ -167,20 +162,11 @@ export class WorkerTaskManagerJobExecutor implements ICronJobExecutor {
     });
 
     if (needsSkillSuggest) {
-      // Defensively unregister first in case a previous execution left a stale entry
       skillSuggestWatcher.unregister(conversationId);
-
-      if (isGeminiLike) {
-        // Gemini/Aionrs: SKILL_SUGGEST instructions are already in the prompt.
-        // Just register the watcher (no onFirstFinish) and start polling.
-        skillSuggestWatcher.register(conversationId, job.id, workspace!);
-        void this.detectSkillSuggestWithRetry(job.id, workspace!, conversationId, 0);
-      } else {
-        // Other agents: send a follow-up message after the first finish event.
-        skillSuggestWatcher.register(conversationId, job.id, workspace!, async () => {
-          await this.sendSkillSuggestRequest(task, job, conversationId, workspace!);
-        });
-      }
+      // Other agents: send a follow-up message after the first finish event.
+      skillSuggestWatcher.register(conversationId, job.id, workspace!, async () => {
+        await this.sendSkillSuggestRequest(task, job, conversationId, workspace!);
+      });
     }
 
     // Return the conversationId used (may differ from job.metadata.conversationId in new_conversation mode)
@@ -286,17 +272,10 @@ export class WorkerTaskManagerJobExecutor implements ICronJobExecutor {
    */
   private getAgentType(backend: AgentBackend): AgentType {
     switch (backend) {
-      case 'gemini':
-        return 'gemini';
       case 'aionrs':
         return 'aionrs';
-      case 'openclaw-gateway':
-      case 'openclaw' as AgentBackend:
-        return 'openclaw-gateway';
-      case 'nanobot':
-        return 'nanobot';
-      case 'remote':
-        return 'remote';
+      case 'codex':
+        return 'acp';
       default:
         return 'acp';
     }
@@ -370,34 +349,10 @@ export class WorkerTaskManagerJobExecutor implements ICronJobExecutor {
     const providerList = (providers && Array.isArray(providers) ? providers : []) as unknown as TProviderWithModel[];
 
     // Read preferred model ID from user config.
-    // Gemini stores its default model in 'gemini.defaultModel' (set by Guid page).
-    // ACP backends store in 'acp.config.<backend>.preferredModelId'.
-    let preferredModelId: string | undefined;
-    if (backend === 'gemini') {
-      const savedModel = await ProcessConfig.get('gemini.defaultModel');
-      if (savedModel && typeof savedModel === 'object' && 'useModel' in savedModel) {
-        preferredModelId = savedModel.useModel;
-      } else if (typeof savedModel === 'string') {
-        preferredModelId = savedModel;
-      }
-    } else if (backend === 'aionrs') {
-      const savedModel = await ProcessConfig.get('aionrs.defaultModel');
-      preferredModelId = savedModel?.useModel;
-    } else {
-      const acpConfig = await ProcessConfig.get('acp.config');
-      preferredModelId = (acpConfig?.[backend as AcpBackendAll] as Record<string, unknown>)?.preferredModelId as
-        | string
-        | undefined;
-    }
-
-    // For gemini, prefer google-auth provider
-    if (backend === 'gemini') {
-      const googleAuth = providerList.find((p) => p.platform === 'gemini-with-google-auth' || p.platform === 'gemini');
-      if (googleAuth) {
-        const useModel = preferredModelId || googleAuth.useModel || 'auto';
-        return { ...googleAuth, useModel } as TProviderWithModel;
-      }
-    }
+    const acpConfig = await ProcessConfig.get('acp.config');
+    const preferredModelId = (acpConfig?.[backend as AcpBackendAll] as Record<string, unknown>)?.preferredModelId as
+      | string
+      | undefined;
 
     // For other backends, find a matching provider
     const match = providerList.find((p) => p.platform === backend || p.id === backend);
@@ -733,9 +688,7 @@ export class WorkerTaskManagerJobExecutor implements ICronJobExecutor {
     };
 
     ipcBridge.conversation.responseStream.emit(message);
-    ipcBridge.geminiConversation.responseStream.emit(message);
     ipcBridge.acpConversation.responseStream.emit(message);
-    ipcBridge.openclawConversation.responseStream.emit(message);
     console.log(`[CronExecutor] Emitted initial skill_suggest for job ${jobId}, conversation ${conversationId}`);
   }
 
@@ -772,9 +725,7 @@ export class WorkerTaskManagerJobExecutor implements ICronJobExecutor {
       data: { cronJobId, cronJobName, triggeredAt },
     };
     ipcBridge.conversation.responseStream.emit(ipcMessage);
-    ipcBridge.geminiConversation.responseStream.emit(ipcMessage);
     ipcBridge.acpConversation.responseStream.emit(ipcMessage);
-    ipcBridge.openclawConversation.responseStream.emit(ipcMessage);
   }
 
   onceIdle(conversationId: string, callback: () => Promise<void>): void {

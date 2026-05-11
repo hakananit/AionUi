@@ -8,7 +8,6 @@ import { agentRegistry } from '@process/agent/AgentRegistry';
 import { isAgentKind } from '@/common/types/detectedAgent';
 import type { IWorkerTaskManager } from '@process/task/IWorkerTaskManager';
 import AcpAgentManager from '@process/task/AcpAgentManager';
-import { GeminiAgentManager } from '@process/task/GeminiAgentManager';
 import { AionrsManager } from '@process/task/AionrsManager';
 import { mcpService } from '@/process/services/mcpServices/McpService';
 import { ipcBridge } from '@/common';
@@ -93,8 +92,8 @@ export function initAcpConversationBridge(workerTaskManager: IWorkerTaskManager)
     const agent = agents.find((a) => isAgentKind(a, 'acp') && a.backend === backend);
     const acpAgent = agent && isAgentKind(agent, 'acp') ? agent : undefined;
 
-    // Skip CLI check for claude/codebuddy (uses npx) and codex (has its own detection)
-    if (!acpAgent?.cliPath && backend !== 'claude' && backend !== 'codebuddy' && backend !== 'codex') {
+    // Skip CLI check for codex (has its own detection)
+    if (!acpAgent?.cliPath && backend !== 'codex') {
       return {
         success: false,
         msg: `${backend} CLI not found`,
@@ -169,7 +168,7 @@ export function initAcpConversationBridge(workerTaskManager: IWorkerTaskManager)
     const task = workerTaskManager.getTask(conversationId);
     if (
       !task ||
-      !(task instanceof AcpAgentManager || task instanceof GeminiAgentManager || task instanceof AionrsManager)
+      !(task instanceof AcpAgentManager || task instanceof AionrsManager)
     ) {
       return Promise.resolve({
         success: true,
@@ -217,7 +216,7 @@ export function initAcpConversationBridge(workerTaskManager: IWorkerTaskManager)
       if (!task) {
         return { success: false, msg: 'Conversation not found' };
       }
-      if (!(task instanceof AcpAgentManager || task instanceof GeminiAgentManager || task instanceof AionrsManager)) {
+      if (!(task instanceof AcpAgentManager || task instanceof AionrsManager)) {
         return {
           success: false,
           msg: 'Mode switching not supported for this agent type',

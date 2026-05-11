@@ -48,9 +48,7 @@ export const MODEL_PLATFORMS: PlatformConfig[] = [
 /**
  * New API 协议选项
  */
-export const NEW_API_PROTOCOL_OPTIONS = [
-  { label: 'OpenAI', value: 'openai' },
-];
+export const NEW_API_PROTOCOL_OPTIONS = [{ label: 'OpenAI', value: 'openai' }];
 
 /**
  * 根据模型名称自动推断 New API 协议类型
@@ -76,7 +74,6 @@ export const getPlatformByValue = (value: string): PlatformConfig | undefined =>
 export const getPresetProviders = (): PlatformConfig[] => {
   return MODEL_PLATFORMS.filter((p) => p.baseUrl);
 };
-
 
 /**
  * 检查是否为自定义选项（无预设 baseUrl）

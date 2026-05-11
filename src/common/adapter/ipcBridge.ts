@@ -13,11 +13,6 @@ import type { SlashCommandItem } from '../chat/slash/types';
 import type { IMcpServer, IProvider, TChatConversation, TProviderWithModel, ICssTheme } from '../config/storage';
 import type { PreviewHistoryTarget, PreviewSnapshotInfo } from '../types/preview';
 import type {
-  UpdateCheckRequest,
-  UpdateCheckResult,
-  UpdateDownloadProgressEvent,
-  UpdateDownloadRequest,
-  UpdateDownloadResult,
   AutoUpdateStatus,
 } from '../update/updateTypes';
 import type { ProtocolDetectionRequest, ProtocolDetectionResponse } from '../utils/protocolDetector';
@@ -99,13 +94,6 @@ export const conversation = {
       'approval.check'
     ),
   },
-};
-
-// Gemini对话相关接口 - 复用统一的conversation接口
-export const geminiConversation = {
-  sendMessage: conversation.sendMessage,
-  confirmMessage: bridge.buildProvider<IBridgeResponse, IConfirmMessageParams>('input.confirm.message'),
-  responseStream: conversation.responseStream,
 };
 
 // CDP status interface
@@ -392,20 +380,6 @@ export const fileSnapshot = {
   getBranches: bridge.buildProvider<string[], { workspace: string }>('file-snapshot-get-branches'),
 };
 
-export const googleAuth = {
-  login: bridge.buildProvider<IBridgeResponse<{ account: string }>, { proxy?: string }>('google.auth.login'),
-  logout: bridge.buildProvider<void, {}>('google.auth.logout'),
-  status: bridge.buildProvider<IBridgeResponse<{ account: string }>, { proxy?: string }>('google.auth.status'),
-};
-
-// 订阅状态查询：用于动态决定是否展示 gemini-3.1-pro-preview / subscription check for Gemini models
-export const gemini = {
-  subscriptionStatus: bridge.buildProvider<
-    IBridgeResponse<{ isSubscriber: boolean; tier?: string; lastChecked: number; message?: string }>,
-    { proxy?: string }
-  >('gemini.subscription-status'),
-};
-
 // AWS Bedrock 相关接口 / AWS Bedrock interfaces
 export const bedrock = {
   testConnection: bridge.buildProvider<
@@ -555,62 +529,6 @@ export const mcpService = {
 export const codexConversation = {
   sendMessage: conversation.sendMessage,
   responseStream: conversation.responseStream,
-};
-
-// OpenClaw 对话相关接口 - 复用统一的conversation接口
-export const openclawConversation = {
-  sendMessage: conversation.sendMessage,
-  responseStream: bridge.buildEmitter<IResponseMessage>('openclaw.response.stream'),
-  getRuntime: bridge.buildProvider<
-    IBridgeResponse<{
-      conversationId: string;
-      runtime: {
-        workspace?: string;
-        backend?: string;
-        agentName?: string;
-        cliPath?: string;
-        model?: string;
-        sessionKey?: string | null;
-        isConnected?: boolean;
-        hasActiveSession?: boolean;
-        identityHash?: string | null;
-      };
-      expected?: {
-        expectedWorkspace?: string;
-        expectedBackend?: string;
-        expectedAgentName?: string;
-        expectedCliPath?: string;
-        expectedModel?: string;
-        expectedIdentityHash?: string | null;
-        switchedAt?: number;
-      };
-    }>,
-    { conversation_id: string }
-  >('openclaw.get-runtime'),
-};
-
-// Remote Agent configuration CRUD
-export const remoteAgent = {
-  list: bridge.buildProvider<import('@process/agent/remote/types').RemoteAgentConfig[], void>('remote-agent.list'),
-  get: bridge.buildProvider<import('@process/agent/remote/types').RemoteAgentConfig | null, { id: string }>(
-    'remote-agent.get'
-  ),
-  create: bridge.buildProvider<
-    import('@process/agent/remote/types').RemoteAgentConfig,
-    import('@process/agent/remote/types').RemoteAgentInput
-  >('remote-agent.create'),
-  update: bridge.buildProvider<
-    boolean,
-    { id: string; updates: Partial<import('@process/agent/remote/types').RemoteAgentInput> }
-  >('remote-agent.update'),
-  delete: bridge.buildProvider<boolean, { id: string }>('remote-agent.delete'),
-  testConnection: bridge.buildProvider<
-    { success: boolean; error?: string },
-    { url: string; authType: string; authToken?: string; allowInsecure?: boolean }
-  >('remote-agent.test-connection'),
-  handshake: bridge.buildProvider<{ status: 'ok' | 'pending_approval' | 'error'; error?: string }, { id: string }>(
-    'remote-agent.handshake'
-  ),
 };
 
 // Database operations
@@ -913,7 +831,7 @@ export interface IConfirmMessageParams {
 }
 
 export interface ICreateConversationParams {
-  type: 'gemini' | 'acp' | 'codex' | 'openclaw-gateway' | 'nanobot' | 'remote' | 'aionrs';
+  type: 'acp' | 'codex' | 'aionrs';
   id?: string;
   name?: string;
   model: TProviderWithModel;
@@ -951,20 +869,8 @@ export interface ICreateConversationParams {
     cachedConfigOptions?: import('../types/acpTypes').AcpSessionConfigOption[];
     /** Pending config option selections from Guid page (applied after session creation) */
     pendingConfigOptions?: Record<string, string>;
-    /** Runtime validation snapshot used for post-switch strong checks (OpenClaw) */
-    runtimeValidation?: {
-      expectedWorkspace?: string;
-      expectedBackend?: string;
-      expectedAgentName?: string;
-      expectedCliPath?: string;
-      expectedModel?: string;
-      expectedIdentityHash?: string | null;
-      switchedAt?: number;
-    };
     /** Explicit marker for temporary health-check conversations */
     isHealthCheck?: boolean;
-    /** Remote agent config ID (FK to remote_agents table) — required when type='remote' */
-    remoteAgentId?: string;
     /** Extra skill directory paths to symlink into workspace (e.g. cron job skill dirs) */
     extraSkillPaths?: string[];
     /** Builtin skill names to exclude from auto-injection (e.g. 'cron' for cron-spawned conversations) */
@@ -1201,58 +1107,7 @@ export const extensions = {
   stateChanged: bridge.buildEmitter<{ name: string; enabled: boolean; reason?: string }>('extensions.state-changed'),
 };
 
-// ==================== Channel API ====================
 
-import type {
-  IChannelPairingRequest,
-  IChannelPluginStatus,
-  IChannelSession,
-  IChannelUser,
-} from '@process/channels/types';
-
-export const channel = {
-  // Plugin Management
-  getPluginStatus: bridge.buildProvider<IBridgeResponse<IChannelPluginStatus[]>, void>('channel.get-plugin-status'),
-  enablePlugin: bridge.buildProvider<IBridgeResponse, { pluginId: string; config: Record<string, unknown> }>(
-    'channel.enable-plugin'
-  ),
-  disablePlugin: bridge.buildProvider<IBridgeResponse, { pluginId: string }>('channel.disable-plugin'),
-  testPlugin: bridge.buildProvider<
-    IBridgeResponse<{ success: boolean; botUsername?: string; error?: string }>,
-    { pluginId: string; token: string; extraConfig?: { appId?: string; appSecret?: string } }
-  >('channel.test-plugin'),
-
-  // Pairing Management
-  getPendingPairings: bridge.buildProvider<IBridgeResponse<IChannelPairingRequest[]>, void>(
-    'channel.get-pending-pairings'
-  ),
-  approvePairing: bridge.buildProvider<IBridgeResponse, { code: string }>('channel.approve-pairing'),
-  rejectPairing: bridge.buildProvider<IBridgeResponse, { code: string }>('channel.reject-pairing'),
-
-  // User Management
-  getAuthorizedUsers: bridge.buildProvider<IBridgeResponse<IChannelUser[]>, void>('channel.get-authorized-users'),
-  revokeUser: bridge.buildProvider<IBridgeResponse, { userId: string }>('channel.revoke-user'),
-
-  // Session Management (MVP: read-only view)
-  getActiveSessions: bridge.buildProvider<IBridgeResponse<IChannelSession[]>, void>('channel.get-active-sessions'),
-
-  // Settings Sync
-  syncChannelSettings: bridge.buildProvider<
-    IBridgeResponse,
-    {
-      platform: string;
-      agent: { backend: string; customAgentId?: string; name?: string };
-      model?: { id: string; useModel: string };
-    }
-  >('channel.sync-channel-settings'),
-
-  // Events
-  pairingRequested: bridge.buildEmitter<IChannelPairingRequest>('channel.pairing-requested'),
-  pluginStatusChanged: bridge.buildEmitter<{ pluginId: string; status: IChannelPluginStatus }>(
-    'channel.plugin-status-changed'
-  ),
-  userAuthorized: bridge.buildEmitter<IChannelUser>('channel.user-authorized'),
-};
 
 // ==================== Agent Hub API ====================
 import type { IHubAgentItem, HubExtensionStatus } from '@/common/types/hub';

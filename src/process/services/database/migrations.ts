@@ -1214,6 +1214,35 @@ const migration_v26: IMigration = {
 };
 
 /**
+ * Migration v26 -> v27: Drop remote_agents table and purge legacy remote conversations
+ * This enforces the local-first architectural mandate by removing persistent
+ * data associated with decommissioned remote/proxy protocols.
+ */
+const migration_v27: IMigration = {
+  version: 27,
+  name: 'Drop remote_agents and purge legacy remote conversations',
+  up: (db) => {
+    // 1. Drop the remote_agents table entirely
+    db.exec('DROP TABLE IF EXISTS remote_agents');
+
+    // 2. Purge messages associated with legacy remote/proxy conversation types
+    // (remote, openclaw-gateway, nanobot)
+    db.exec(`DELETE FROM messages WHERE conversation_id IN (
+      SELECT id FROM conversations WHERE type IN ('remote', 'openclaw-gateway', 'nanobot')
+    )`);
+
+    // 3. Purge the legacy conversations themselves
+    db.exec(`DELETE FROM conversations WHERE type IN ('remote', 'openclaw-gateway', 'nanobot')`);
+
+    console.log('[Migration v27] Dropped remote_agents table and purged legacy remote data');
+  },
+  down: (_db) => {
+    // Cannot safely recreate the table or restore purged data
+    console.warn('[Migration v27] Rollback skipped: legacy remote data cannot be restored safely.');
+  },
+};
+
+/**
  * All migrations in order
  */
 // prettier-ignore
@@ -1222,7 +1251,7 @@ export const ALL_MIGRATIONS: IMigration[] = [
   migration_v7, migration_v8, migration_v9, migration_v10, migration_v11, migration_v12,
   migration_v13, migration_v14, migration_v15, migration_v16, migration_v17, migration_v18,
   migration_v19, migration_v20, migration_v21, migration_v22, migration_v23, migration_v24,
-  migration_v25, migration_v26,
+  migration_v25, migration_v26, migration_v27,
 ];
 
 /**

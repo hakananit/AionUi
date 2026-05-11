@@ -32,12 +32,9 @@ export const useAgentAvailability = ({
 }: UseAgentAvailabilityOptions): UseAgentAvailabilityResult => {
   const isMainAgentAvailable = useCallback(
     (agentType: string): boolean => {
-      if (agentType === 'gemini') {
-        return isGoogleAuth || (modelList != null && modelList.length > 0);
-      }
       return availableAgents?.some((agent) => agent.backend === agentType) ?? false;
     },
-    [modelList, availableAgents, isGoogleAuth]
+    [availableAgents]
   );
 
   const getEffectiveAgentType = useCallback(

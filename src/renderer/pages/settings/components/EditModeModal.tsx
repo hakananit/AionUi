@@ -14,9 +14,7 @@ import useModeModeList from '@renderer/hooks/agent/useModeModeList';
  * 供应商配置（包含名称、URL、Logo）
  * Provider config (includes name, URL, logo)
  */
-const PROVIDER_CONFIGS = [
-  { name: 'Custom', url: '', logo: null, platform: 'custom' },
-];
+const PROVIDER_CONFIGS = [{ name: 'Custom', url: '', logo: null, platform: 'custom' }];
 
 /**
  * 根据名称或 URL 获取供应商 Logo
