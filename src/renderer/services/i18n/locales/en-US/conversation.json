@@ -16,10 +16,7 @@
     "none": "None",
     "quickActionsTitle": "What can AionUi do?",
     "quickActionFeedback": "Got feedback or suggestions?",
-    "quickActionStar": "Like us? Give us a star!",
-    "skillsMarket": "AionUi Skills Market",
-    "skillsMarketDesc": "Search and activate community Skills on demand. Configure once, available for all agents.",
-    "skillsMarketDetails": "View More >>"
+    "quickActionStar": "Like us? Give us a star!"
   },
   "history": {
     "recents": "Recents",
@@ -206,30 +203,11 @@
     "quotaSwitched": "Switched to {{model}}.",
     "apiErrorNoCli": "API error occurred. No CLI agent available for fallback.",
     "apiErrorSwitchFailed": "Failed to create fallback conversation.",
-    "apiErrorSwitched": "API error, auto-switched to {{cli}} CLI",
+    "apiErrorSwitched": "API error, please check your network or configuration",
     "confirmationLoadError": "Failed to load confirmation dialog",
     "tryAnotherAgent": "Try another agent:",
     "switchedToAgent": "Switched to {{agent}}",
-    "switchAgentFailed": "Failed to switch agent",
-    "speech": {
-      "recordTooltip": "Start voice input",
-      "pickFileTooltip": "Select an audio file",
-      "stopTooltip": "Stop recording",
-      "processing": "Transcribing audio...",
-      "unsupported": "Voice input is not available in this environment",
-      "startShort": "Mic",
-      "stopShort": "Stop",
-      "transcribingShort": "...",
-      "audioCaptureError": "No microphone was detected",
-      "emptyTranscript": "No speech was detected",
-      "fileTooLarge": "Audio file is too large",
-      "networkError": "Network error while transcribing audio",
-      "notConfigured": "Speech-to-text is not configured yet",
-      "permissionDenied": "Microphone permission was denied",
-      "recordingUnsupported": "Live recording is not supported here. Please upload an audio file instead",
-      "transcriptionFailed": "Audio transcription failed",
-      "genericError": "Voice input failed. Please try again"
-    }
+    "switchAgentFailed": "Failed to switch agent"
   },
   "sideQuestion": {
     "title": "Side Question",

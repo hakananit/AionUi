@@ -1,41 +1,6 @@
 import { ipcBridge } from '@/common';
 import useSWR from 'swr';
 
-export type { GeminiModeOption } from '@/common/utils/geminiModes';
-export { getGeminiModeList } from '@/common/utils/geminiModes';
-import { getGeminiModeList } from '@/common/utils/geminiModes';
-
-export const geminiModeList = getGeminiModeList();
-
-// Gemini 模型排序函数：Pro 优先，版本号降序
-const sortGeminiModels = (models: { label: string; value: string }[]) => {
-  return models.toSorted((a, b) => {
-    const aPro = a.value.toLowerCase().includes('pro');
-    const bPro = b.value.toLowerCase().includes('pro');
-
-    // Pro 模型排在前面
-    if (aPro && !bPro) return -1;
-    if (!aPro && bPro) return 1;
-
-    // 提取版本号进行比较
-    const extractVersion = (name: string) => {
-      const match = name.match(/(\d+\.?\d*)/);
-      return match ? parseFloat(match[1]) : 0;
-    };
-
-    const aVersion = extractVersion(a.value);
-    const bVersion = extractVersion(b.value);
-
-    // 版本号大的排在前面
-    if (aVersion !== bVersion) {
-      return bVersion - aVersion;
-    }
-
-    // 版本号相同时按字母顺序排序
-    return a.value.localeCompare(b.value);
-  });
-};
-
 const useModeModeList = (
   platform: string,
   base_url?: string,
@@ -68,11 +33,6 @@ const useModeModeList = (
                 return { label: v.name, value: v.id };
               }
             }) || [];
-
-          // 如果是 Gemini 平台，优化排序
-          if (platform?.includes('gemini')) {
-            modelList = sortGeminiModels(modelList);
-          }
 
           // 如果返回了修复的 base_url，将其添加到结果中
           if (res.data?.fix_base_url) {

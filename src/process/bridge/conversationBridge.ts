@@ -4,30 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GeminiAgent, GeminiApprovalStore } from '@process/agent/gemini';
 import type { TChatConversation } from '@/common/config/storage';
 import type { IAgentManager } from '@process/task/IAgentManager';
 import type { IConversationService, CreateConversationParams } from '@process/services/IConversationService';
 import type { IWorkerTaskManager } from '@process/task/IWorkerTaskManager';
-import type { TeamSessionService } from '@process/team/TeamSessionService';
 import { ipcBridge } from '@/common';
 import { removeFromMessageCache } from '@process/utils/message';
-import {
-  getSkillsDir,
-  getBuiltinSkillsCopyDir,
-  getSystemDir,
-  ProcessChat,
-  ProcessConfig,
-} from '@process/utils/initStorage';
+import { getSkillsDir, getBuiltinSkillsCopyDir, getSystemDir, ProcessChat } from '@process/utils/initStorage';
 import type AcpAgentManager from '../task/AcpAgentManager';
-import type { GeminiAgentManager } from '../task/GeminiAgentManager';
-import { AionrsApprovalStore, type AionrsManager } from '../task/AionrsManager';
-import type OpenClawAgentManager from '../task/OpenClawAgentManager';
 import { prepareFirstMessage } from '../task/agentUtils';
 import { AcpSkillManager } from '../task/AcpSkillManager';
 import { refreshTrayMenu } from '@process/utils/tray';
-import { copyFilesToDirectory, readDirectoryRecursive } from '@process/utils';
-import { computeOpenClawIdentityHash } from '@process/utils/openclawUtils';
+import { readDirectoryRecursive } from '@process/utils';
 import fs from 'fs';
 import path from 'path';
 import { migrateConversationToDatabase } from './migrationUtils';
@@ -41,20 +29,11 @@ const refreshTrayMenuSafely = async (): Promise<void> => {
   }
 };
 
-const VALID_CONVERSATION_TYPES = new Set<TChatConversation['type']>([
-  'gemini',
-  'acp',
-  'codex',
-  'openclaw-gateway',
-  'nanobot',
-  'remote',
-  'aionrs',
-]);
+const VALID_CONVERSATION_TYPES = new Set<TChatConversation['type']>(['acp', 'codex', 'aionrs']);
 
 export function initConversationBridge(
   conversationService: IConversationService,
-  workerTaskManager: IWorkerTaskManager,
-  teamSessionService?: TeamSessionService
+  workerTaskManager: IWorkerTaskManager
 ): void {
   const sideQuestionService = new ConversationSideQuestionService(conversationService);
 
@@ -68,61 +47,6 @@ export function initConversationBridge(
       source: conversation.source || 'aionui',
     });
   };
-
-  ipcBridge.openclawConversation.getRuntime.provider(async ({ conversation_id }) => {
-    try {
-      const conversation = await conversationService.getConversation(conversation_id);
-      if (!conversation || conversation.type !== 'openclaw-gateway') {
-        return { success: false, msg: 'OpenClaw conversation not found' };
-      }
-      const task = (await workerTaskManager.getOrBuildTask(conversation_id)) as unknown as
-        | OpenClawAgentManager
-        | undefined;
-      if (!task || task.type !== 'openclaw-gateway') {
-        return { success: false, msg: 'OpenClaw runtime not available' };
-      }
-
-      // Await bootstrap to ensure the agent is fully connected before returning runtime info.
-      // Without this, getRuntime may return isConnected=false while the agent is still connecting.
-      await task.bootstrap.catch(() => {});
-
-      const diagnostics = task.getDiagnostics();
-      const identityHash = await computeOpenClawIdentityHash(diagnostics.workspace || conversation.extra?.workspace);
-      const conversationModel = (conversation as { model?: { useModel?: string } }).model;
-      const extra = conversation.extra as
-        | {
-            cliPath?: string;
-            gateway?: { cliPath?: string };
-            runtimeValidation?: unknown;
-          }
-        | undefined;
-      const gatewayCliPath = extra?.gateway?.cliPath;
-
-      return {
-        success: true,
-        data: {
-          conversationId: conversation_id,
-          runtime: {
-            workspace: diagnostics.workspace || conversation.extra?.workspace,
-            backend: diagnostics.backend || conversation.extra?.backend,
-            agentName: diagnostics.agentName || conversation.extra?.agentName,
-            cliPath: diagnostics.cliPath || extra?.cliPath || gatewayCliPath,
-            model: conversationModel?.useModel,
-            sessionKey: diagnostics.sessionKey,
-            isConnected: diagnostics.isConnected,
-            hasActiveSession: diagnostics.hasActiveSession,
-            identityHash,
-          },
-          expected: extra?.runtimeValidation,
-        },
-      };
-    } catch (error) {
-      return {
-        success: false,
-        msg: error instanceof Error ? error.message : String(error),
-      };
-    }
-  });
 
   ipcBridge.conversation.create.provider(async (params): Promise<TChatConversation> => {
     if (!VALID_CONVERSATION_TYPES.has(params?.type as TChatConversation['type'])) {
@@ -169,26 +93,6 @@ export function initConversationBridge(
     } catch (error) {
       console.error('[conversationBridge] Failed to create conversation:', error);
       throw error;
-    }
-  });
-
-  // Manually reload conversation context (Gemini): inject recent history into memory
-  ipcBridge.conversation.reloadContext.provider(async ({ conversation_id }) => {
-    try {
-      const task = (await workerTaskManager.getOrBuildTask(conversation_id)) as unknown as
-        | GeminiAgentManager
-        | AcpAgentManager
-        | undefined;
-      if (!task) return { success: false, msg: 'conversation not found' };
-      if (task.type !== 'gemini') return { success: false, msg: 'only supported for gemini' };
-
-      await (task as GeminiAgentManager).reloadContext();
-      return { success: true };
-    } catch (e: unknown) {
-      return {
-        success: false,
-        msg: e instanceof Error ? e.message : String(e),
-      };
     }
   });
 
@@ -270,22 +174,6 @@ export function initConversationBridge(
       // Kill the running task if exists
       workerTaskManager.kill(id);
 
-      // If source is not 'aionui' (e.g., telegram), cleanup channel resources
-      // 如果来源不是 aionui（如 telegram），需要清理 channel 相关资源
-      if (source && source !== 'aionui') {
-        try {
-          // Dynamic import to avoid circular dependency
-          const { getChannelManager } = await import('@process/channels/core/ChannelManager');
-          const channelManager = getChannelManager();
-          if (channelManager.isInitialized()) {
-            await channelManager.cleanupConversation(id);
-          }
-        } catch (cleanupError) {
-          console.warn('[conversationBridge] Failed to cleanup channel resources:', cleanupError);
-          // Continue with deletion even if cleanup fails
-        }
-      }
-
       await conversationService.deleteConversation(id);
       removeFromMessageCache(id);
       if (conversation) {
@@ -343,13 +231,6 @@ export function initConversationBridge(
   // flag) to avoid triggering the sidebar loading spinner prematurely.
   ipcBridge.conversation.warmup.provider(async ({ conversation_id }) => {
     try {
-      if (teamSessionService) {
-        const conversation = await conversationService.getConversation(conversation_id);
-        const teamId = (conversation?.extra as { teamId?: string } | undefined)?.teamId;
-        if (teamId) {
-          await teamSessionService.getOrStartSession(teamId);
-        }
-      }
       const task = await workerTaskManager.getOrBuildTask(conversation_id);
       if (task && task.type === 'acp') {
         await (task as unknown as AcpAgentManager).initAgent();
@@ -408,10 +289,8 @@ export function initConversationBridge(
 
   ipcBridge.conversation.getWorkspace.provider(async ({ workspace, search, path }) => {
     try {
-      const fileService = GeminiAgent.buildFileServer(workspace);
       return await readDirectoryRecursive(path, {
         root: workspace,
-        fileService,
         abortController: buildLastAbortController(),
         maxDepth: 10, // 支持更深的目录结构 / Support deeper directory structures
         search: {
@@ -521,25 +400,9 @@ export function initConversationBridge(
       return { success: false, msg: 'conversation not found' };
     }
 
-    // Handle file paths based on agent type
-    // Gemini requires files in workspace; other agents can use cache directory directly
-    let workspaceFiles: string[];
-    const isGeminiAgent = task.type === 'gemini';
-
-    if (isGeminiAgent) {
-      // Gemini: Copy files to workspace (required for gemini CLI)
-      // Wrap in try-catch to prevent unhandled rejection when workspace directory is missing
-      try {
-        workspaceFiles = await copyFilesToDirectory(task.workspace, files, false, getSystemDir().cacheDir);
-      } catch (error) {
-        console.error('[conversationBridge] sendMessage: failed to copy files to workspace:', error);
-        workspaceFiles = [];
-      }
-    } else {
-      // Non-Gemini agents (ACP, Codex, NanoBot, OpenClaw, Remote): Use cache directory paths directly
-      // Filter to only include absolute paths that exist
-      workspaceFiles = (files ?? []).filter((f) => path.isAbsolute(f));
-    }
+    // ACP, Codex agents: Use cache directory paths directly
+    // Filter to only include absolute paths that exist
+    const workspaceFiles = (files ?? []).filter((f) => path.isAbsolute(f));
 
     if (workspaceFiles.length > 0) {
       const resolvedWorkspace = path.resolve(task.workspace);
@@ -593,32 +456,6 @@ export function initConversationBridge(
         agentContent,
       });
 
-      // Defer cleanup until after Gemini worker finishes processing the files.
-      // sendMessage() resolves when the worker acknowledges receipt, but the worker
-      // continues reading files asynchronously during streaming. Deleting immediately
-      // after sendMessage() causes a race condition where Gemini CLI reads deleted files.
-      if (isGeminiAgent && workspaceFiles.length > 0) {
-        const saveToWorkspace = await ProcessConfig.get('upload.saveToWorkspace').catch(() => false);
-        if (!saveToWorkspace) {
-          const geminiTask = task as unknown as GeminiAgentManager;
-          const filesToCleanup = [...workspaceFiles];
-          const resolvedWorkspace = path.resolve(task.workspace);
-          const handleMessage = (data: { type: string }) => {
-            if (data.type !== 'finish') return;
-            geminiTask.off('gemini.message', handleMessage);
-            for (const filePath of filesToCleanup) {
-              const resolvedFile = path.resolve(filePath);
-              if (resolvedFile.startsWith(resolvedWorkspace + path.sep)) {
-                fs.promises.unlink(filePath).catch((cleanupError) => {
-                  console.warn('[conversationBridge] Failed to cleanup file:', filePath, cleanupError);
-                });
-              }
-            }
-          };
-          geminiTask.on('gemini.message', handleMessage);
-        }
-      }
-
       return { success: true };
     } catch (err: unknown) {
       return {
@@ -647,26 +484,6 @@ export function initConversationBridge(
   // Keys are parsed from raw action+commandType here (single source of truth)
   // Keys 在此处从原始 action+commandType 解析（单一数据源）
   ipcBridge.conversation.approval.check.provider(async ({ conversation_id, action, commandType }) => {
-    const task = workerTaskManager.getTask(conversation_id) as unknown as
-      | GeminiAgentManager
-      | AionrsManager
-      | undefined;
-    if (!task || !('approvalStore' in task) || !task.approvalStore) {
-      return false;
-    }
-
-    if (task.type === 'gemini') {
-      const keys = GeminiApprovalStore.createKeysFromConfirmation(action, commandType);
-      if (keys.length === 0) return false;
-      return task.approvalStore.allApproved(keys);
-    }
-
-    if (task.type === 'aionrs') {
-      const keys = AionrsApprovalStore.createKeysFromConfirmation(action, commandType);
-      if (keys.length === 0) return false;
-      return task.approvalStore.allApproved(keys);
-    }
-
     return false;
   });
 }

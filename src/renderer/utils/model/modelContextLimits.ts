@@ -8,20 +8,6 @@
  * 已知模型的 context window 大小配置
  */
 const MODEL_CONTEXT_LIMITS: Record<string, number> = {
-  // Gemini 系列
-  'gemini-3.1-pro-preview': 1_048_576,
-  'gemini-3-pro-preview': 1_048_576,
-  'gemini-3-flash-preview': 1_048_576,
-  'gemini-3-pro-image-preview': 65_536,
-  'gemini-2.5-pro': 1_048_576,
-  'gemini-2.5-flash': 1_048_576,
-  'gemini-2.5-flash-lite': 1_048_576,
-  'gemini-2.5-flash-image': 32_768,
-  'gemini-2.0-flash': 1_048_576,
-  'gemini-2.0-flash-lite': 1_048_576,
-  'gemini-1.5-pro': 2_097_152,
-  'gemini-1.5-flash': 1_048_576,
-
   // OpenAI 系列
   'gpt-5.1': 400_000,
   'gpt-5.1-chat': 128_000,
@@ -39,18 +25,6 @@ const MODEL_CONTEXT_LIMITS: Record<string, number> = {
   'o1-mini': 128_000,
   o3: 200_000,
   'o3-mini': 200_000,
-
-  // Claude 系列
-  'claude-opus-4.5': 200_000,
-  'claude-haiku-4.5': 200_000,
-  'claude-sonnet-4.5': 1_000_000,
-  'claude-opus-4.1': 200_000,
-  'claude-opus-4': 200_000,
-  'claude-sonnet-4': 1_000_000,
-  'claude-3.7-sonnet': 200_000,
-  'claude-3.5-haiku': 200_000,
-  'claude-3-opus': 200_000,
-  'claude-3-haiku': 200_000,
 };
 
 /**
@@ -60,7 +34,7 @@ export const DEFAULT_CONTEXT_LIMIT = 1_048_576;
 
 /**
  * 根据模型名称获取 context limit
- * 支持模糊匹配，例如 "gemini-2.5-pro-latest" 会匹配 "gemini-2.5-pro"
+ * 支持模糊匹配，例如 "claude-3.7-sonnet-latest" 会匹配 "claude-3.7-sonnet"
  */
 export function getModelContextLimit(modelName: string | undefined | null): number {
   if (!modelName) return DEFAULT_CONTEXT_LIMIT;

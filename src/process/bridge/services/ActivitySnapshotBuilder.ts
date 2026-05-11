@@ -49,18 +49,10 @@ const resolveAgentIdentity = (conversation: TChatConversation): { backend: strin
   if (conversation.type === 'codex') {
     return { backend: 'codex', agentName: 'Codex' };
   }
-  if (conversation.type === 'gemini') {
-    return { backend: 'gemini', agentName: 'Gemini' };
+  if (conversation.type === 'aionrs') {
+    return { backend: 'aionrs', agentName: 'AionRS' };
   }
-  if (conversation.type === 'openclaw-gateway') {
-    const backend = String(conversation.extra?.backend || 'openclaw');
-    const agentName = String(conversation.extra?.agentName || 'OpenClaw');
-    return { backend, agentName };
-  }
-  if (conversation.type === 'remote') {
-    return { backend: 'remote', agentName: 'Remote Agent' };
-  }
-  return { backend: 'nanobot', agentName: 'NanoBot' };
+  return { backend: 'unknown', agentName: 'Unknown Agent' };
 };
 
 const toEventText = (message: TMessage): { kind: 'status' | 'tool' | 'message'; text: string; at: number } | null => {
@@ -110,7 +102,7 @@ export class ActivitySnapshotBuilder {
 
   async build(): Promise<IExtensionAgentActivitySnapshot> {
     const conversationsResult = await this.repo.getUserConversations(undefined, 0, 10000);
-    const conversations = conversationsResult.data.filter((conv) => !conv.extra?.isHealthCheck);
+    const conversations = conversationsResult.data.filter((conv) => !(conv.extra as any)?.isHealthCheck);
 
     const byAgent = new Map<string, IExtensionAgentActivityItem>();
     let runningConversations = 0;

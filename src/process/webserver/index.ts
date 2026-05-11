@@ -12,6 +12,8 @@ import { execSync } from 'child_process';
 import { networkInterfaces } from 'os';
 import { AuthService } from '@process/webserver/auth/service/AuthService';
 import { UserRepository } from '@process/webserver/auth/repository/UserRepository';
+import { WebuiService } from '@process/bridge/services/WebuiService';
+
 import { AUTH_CONFIG, SERVER_CONFIG } from './config/constants';
 import { initWebAdapter } from './adapter';
 import { setupBasicMiddleware, setupCors, setupErrorHandler } from './setup';
@@ -58,58 +60,14 @@ export function clearInitialAdminPassword(): void {
   initialAdminPassword = null;
 }
 
-/**
- * 获取局域网 IP 地址
- * Get LAN IP address using os.networkInterfaces()
- */
-function getLanIP(): string | null {
-  const nets = networkInterfaces();
-  for (const name of Object.keys(nets)) {
-    const netInfo = nets[name];
-    if (!netInfo) continue;
 
-    for (const iface of netInfo) {
-      // 跳过内部地址（127.0.0.1）和 IPv6
-      // Skip internal addresses (127.0.0.1) and IPv6
-      const isIPv4 = iface.family === 'IPv4';
-      const isNotInternal = !iface.internal;
-      if (isIPv4 && isNotInternal) {
-        return iface.address;
-      }
-    }
-  }
-  return null;
-}
 
 /**
  * 获取公网 IP 地址（仅 Linux 无桌面环境）
  * Get public IP address (Linux headless only)
  */
 function getPublicIP(): string | null {
-  // 只在 Linux 无桌面环境下尝试获取公网 IP
-  // Only try to get public IP on Linux headless environment
-  const isLinuxHeadless = process.platform === 'linux' && !process.env.DISPLAY;
-  if (!isLinuxHeadless) {
-    return null;
-  }
-
-  try {
-    // 使用 curl 获取公网 IP（有 2 秒超时）
-    // Use curl to get public IP (with 2 second timeout)
-    const publicIP = execSync('curl -s --max-time 2 ifconfig.me || curl -s --max-time 2 api.ipify.org', {
-      encoding: 'utf8',
-      timeout: 3000,
-    }).trim();
-
-    // 验证是否为有效的 IPv4 地址
-    // Validate IPv4 address format
-    if (publicIP && /^(\d{1,3}\.){3}\d{1,3}$/.test(publicIP)) {
-      return publicIP;
-    }
-  } catch {
-    // Ignore errors (firewall, network issues, etc.)
-  }
-
+  // Disabled for privacy to prevent external network calls
   return null;
 }
 
@@ -127,7 +85,7 @@ function getServerIP(): string | null {
 
   // 2. 所有平台：获取局域网 IP（包括 Windows/Mac/Linux）
   // All platforms: get LAN IP (Windows/Mac/Linux)
-  return getLanIP();
+  return WebuiService.getLanIP();
 }
 
 /**

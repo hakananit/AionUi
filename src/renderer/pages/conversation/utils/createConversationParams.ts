@@ -26,7 +26,6 @@ type ModePreference = {
 const LEGACY_YOLO_MODE_MAP: Partial<Record<string, string>> = {
   claude: 'bypassPermissions',
   codex: 'yolo',
-  gemini: 'yolo',
   qwen: 'yolo',
 };
 
@@ -38,9 +37,7 @@ async function resolvePreferredMode(backend: string): Promise<string | undefined
 
   let preference: ModePreference | undefined;
 
-  if (backend === 'gemini') {
-    preference = await ConfigStorage.get('gemini.config');
-  } else if (backend === 'aionrs') {
+  if (backend === 'aionrs') {
     preference = await ConfigStorage.get('aionrs.config');
   } else {
     const acpConfig = await ConfigStorage.get('acp.config');
@@ -117,60 +114,7 @@ export async function getDefaultAionrsModel(): Promise<TProviderWithModel> {
   };
 }
 
-/**
- * Get the default Gemini model configuration from user settings.
- * Throws if no enabled provider or model is configured.
- * [BUG-3 fix]: callers must call this inside a try block
- */
-export async function getDefaultGeminiModel(): Promise<TProviderWithModel> {
-  const providers = await ConfigStorage.get('model.config');
 
-  if (!providers || providers.length === 0) {
-    throw new Error('No model provider configured');
-  }
-
-  const enabledProvider = providers.find((p) => p.enabled !== false);
-  if (!enabledProvider) {
-    throw new Error('No enabled model provider');
-  }
-
-  const enabledModel = enabledProvider.model.find((m) => enabledProvider.modelEnabled?.[m] !== false);
-
-  return {
-    id: enabledProvider.id,
-    platform: enabledProvider.platform,
-    name: enabledProvider.name,
-    baseUrl: enabledProvider.baseUrl,
-    apiKey: enabledProvider.apiKey,
-    useModel: enabledModel || enabledProvider.model[0],
-    capabilities: enabledProvider.capabilities,
-    contextLimit: enabledProvider.contextLimit,
-    modelProtocols: enabledProvider.modelProtocols,
-    bedrockConfig: enabledProvider.bedrockConfig,
-    enabled: enabledProvider.enabled,
-    modelEnabled: enabledProvider.modelEnabled,
-    modelHealth: enabledProvider.modelHealth,
-  };
-}
-
-/**
- * Resolve the Gemini model to use, falling back to a placeholder for Google Auth if needed.
- */
-async function resolveGeminiModel(): Promise<TProviderWithModel> {
-  try {
-    return await getDefaultGeminiModel();
-  } catch (e) {
-    // Fallback to placeholder if no model configured (supports Google Auth users)
-    return {
-      id: 'gemini-placeholder',
-      name: 'Gemini',
-      useModel: 'default',
-      platform: 'gemini-with-google-auth' as TProviderWithModel['platform'],
-      baseUrl: '',
-      apiKey: '',
-    };
-  }
-}
 
 /**
  * Build ICreateConversationParams for a CLI agent.
@@ -186,9 +130,7 @@ export async function buildCliAgentParams(
   const preferredAcpModelId = type === 'acp' ? await resolvePreferredAcpModelId(agent.backend) : undefined;
 
   let model: TProviderWithModel;
-  if (type === 'gemini') {
-    model = await resolveGeminiModel();
-  } else if (type === 'aionrs') {
+  if (type === 'aionrs') {
     // Aionrs needs a real model from configured providers (anthropic, openai, ali-intl, aws)
     model = await getDefaultAionrsModel();
   } else {
@@ -219,7 +161,7 @@ export async function buildPresetAssistantParams(
   workspace: string,
   language: string
 ): Promise<ICreateConversationParams> {
-  const { customAgentId, presetAgentType = 'gemini' } = agent;
+  const { customAgentId, presetAgentType = 'aionrs' } = agent;
 
   // [BUG-2] Map raw i18n.language to standard locale key
   const localeKey = resolveLocaleKey(language);
@@ -236,7 +178,7 @@ export async function buildPresetAssistantParams(
   const type = getConversationTypeForBackend(presetAgentType);
   const preferredMode = await resolvePreferredMode(presetAgentType);
   const preferredAcpModelId = type === 'acp' ? await resolvePreferredAcpModelId(presetAgentType) : undefined;
-  const model = type === 'gemini' ? await resolveGeminiModel() : ({} as TProviderWithModel);
+  const model = type === 'aionrs' ? await getDefaultAionrsModel() : ({} as TProviderWithModel);
 
   return buildAgentConversationParams({
     backend: agent.backend,

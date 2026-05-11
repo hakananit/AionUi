@@ -9,58 +9,12 @@ import { ipcBridge } from '@/common';
 import useModeModeList from '@renderer/hooks/agent/useModeModeList';
 
 // Provider Logo imports
-import GeminiLogo from '@/renderer/assets/logos/ai-major/gemini.svg';
-import OpenAILogo from '@/renderer/assets/logos/ai-major/openai.svg';
-import AnthropicLogo from '@/renderer/assets/logos/ai-major/anthropic.svg';
-import BedrockLogo from '@/renderer/assets/logos/ai-cloud/bedrock.svg';
-import DeepSeekLogo from '@/renderer/assets/logos/ai-major/deepseek.svg';
-import OpenRouterLogo from '@/renderer/assets/logos/ai-cloud/openrouter.svg';
-import SiliconFlowLogo from '@/renderer/assets/logos/ai-cloud/siliconflow.png';
-import QwenLogo from '@/renderer/assets/logos/ai-china/qwen.svg';
-import KimiLogo from '@/renderer/assets/logos/ai-china/kimi.svg';
-import ZhipuLogo from '@/renderer/assets/logos/ai-china/zhipu.svg';
-import XaiLogo from '@/renderer/assets/logos/ai-major/xai.svg';
-import VolcengineLogo from '@/renderer/assets/logos/ai-china/volcengine.svg';
-import BaiduLogo from '@/renderer/assets/logos/ai-china/baidu.svg';
-import TencentLogo from '@/renderer/assets/logos/ai-china/tencent.svg';
-import LingyiLogo from '@/renderer/assets/logos/ai-china/lingyiwanwu.svg';
-import PoeLogo from '@/renderer/assets/logos/ai-cloud/poe.svg';
-import ModelScopeLogo from '@/renderer/assets/logos/ai-cloud/modelscope.svg';
-import InfiniAILogo from '@/renderer/assets/logos/ai-cloud/infiniai.svg';
-import CtyunLogo from '@/renderer/assets/logos/ai-cloud/ctyun.svg';
-import StepFunLogo from '@/renderer/assets/logos/ai-china/stepfun.svg';
-import NewApiLogo from '@/renderer/assets/logos/ai-cloud/newapi.svg';
 
 /**
  * 供应商配置（包含名称、URL、Logo）
  * Provider config (includes name, URL, logo)
  */
-const PROVIDER_CONFIGS = [
-  { name: 'Gemini', url: '', logo: GeminiLogo, platform: 'gemini' },
-  { name: 'Gemini (Vertex AI)', url: '', logo: GeminiLogo, platform: 'gemini-vertex-ai' },
-  { name: 'New API', url: '', logo: NewApiLogo, platform: 'new-api' },
-  { name: 'OpenAI', url: 'https://api.openai.com/v1', logo: OpenAILogo },
-  { name: 'Anthropic', url: 'https://api.anthropic.com/v1', logo: AnthropicLogo },
-  { name: 'AWS Bedrock', url: '', logo: BedrockLogo, platform: 'bedrock' },
-  { name: 'DeepSeek', url: 'https://api.deepseek.com', logo: DeepSeekLogo },
-  { name: 'OpenRouter', url: 'https://openrouter.ai/api/v1', logo: OpenRouterLogo },
-  { name: 'SiliconFlow-CN', url: 'https://api.siliconflow.cn/v1', logo: SiliconFlowLogo },
-  { name: 'SiliconFlow', url: 'https://api.siliconflow.com/v1', logo: SiliconFlowLogo },
-  { name: 'Dashscope', url: 'https://dashscope.aliyuncs.com/compatible-mode/v1', logo: QwenLogo },
-  { name: 'Moonshot (China)', url: 'https://api.moonshot.cn/v1', logo: KimiLogo },
-  { name: 'Moonshot (Global)', url: 'https://api.moonshot.ai/v1', logo: KimiLogo },
-  { name: 'Zhipu', url: 'https://open.bigmodel.cn/api/paas/v4', logo: ZhipuLogo },
-  { name: 'xAI', url: 'https://api.x.ai/v1', logo: XaiLogo },
-  { name: 'Ark', url: 'https://ark.cn-beijing.volces.com/api/v3', logo: VolcengineLogo },
-  { name: 'Qianfan', url: 'https://qianfan.baidubce.com/v2', logo: BaiduLogo },
-  { name: 'Hunyuan', url: 'https://api.hunyuan.cloud.tencent.com/v1', logo: TencentLogo },
-  { name: 'Lingyi', url: 'https://api.lingyiwanwu.com/v1', logo: LingyiLogo },
-  { name: 'Poe', url: 'https://api.poe.com/v1', logo: PoeLogo },
-  { name: 'ModelScope', url: 'https://api-inference.modelscope.cn/v1', logo: ModelScopeLogo },
-  { name: 'InfiniAI', url: 'https://cloud.infini-ai.com/maas/v1', logo: InfiniAILogo },
-  { name: 'Ctyun', url: 'https://wishub-x1.ctyun.cn/v1', logo: CtyunLogo },
-  { name: 'StepFun', url: 'https://api.stepfun.com/v1', logo: StepFunLogo },
-];
+const PROVIDER_CONFIGS = [{ name: 'Custom', url: '', logo: null, platform: 'custom' }];
 
 /**
  * 根据名称或 URL 获取供应商 Logo
@@ -121,7 +75,7 @@ const EditModeModal = ModalHOC<{ data?: IProvider; onChange(data: IProvider): vo
 
     // For Bedrock, don't pass bedrockConfig to avoid auto-refresh on input changes
     // We'll build it dynamically in onFocus
-    const modelListState = useModeModeList(data?.platform || 'gemini', data?.baseUrl, data?.apiKey, true, undefined);
+    const modelListState = useModeModeList(data?.platform || 'custom', data?.baseUrl, data?.apiKey, true, undefined);
 
     useEffect(() => {
       if (data) {
@@ -207,8 +161,8 @@ const EditModeModal = ModalHOC<{ data?: IProvider; onChange(data: IProvider): vo
             <Form.Item
               hidden={isBedrock}
               label={t('settings.baseUrl')}
-              required={data?.platform !== 'gemini' && data?.platform !== 'gemini-vertex-ai' && !isBedrock}
-              rules={[{ required: data?.platform !== 'gemini' && data?.platform !== 'gemini-vertex-ai' && !isBedrock }]}
+              required={!isBedrock}
+              rules={[{ required: !isBedrock }]}
               field={'baseUrl'}
               disabled
             >

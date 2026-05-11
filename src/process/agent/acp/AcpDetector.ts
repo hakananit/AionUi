@@ -15,7 +15,7 @@ import { getEnhancedEnv } from '@process/utils/shellEnv';
 /**
  * ACP agent detector — discovers ACP protocol agents from two sources:
  *
- * **Builtin agents** — Well-known CLI tools (claude, qwen, goose, etc.) defined
+ * **Builtin agents** — Well-known CLI tools (cursor, codex, etc.) defined
  * in POTENTIAL_ACP_CLIS. Detected via `which`/`where` on the system PATH.
  *
  * **Extension agents** — Contributed by installed extensions via

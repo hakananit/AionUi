@@ -5,7 +5,7 @@
  */
 
 /**
- * Copy text to clipboard with fallback for non-secure contexts (e.g. WebUI over HTTP).
+ * Copy text to clipboard.
  * Uses navigator.clipboard when available, otherwise falls back to document.execCommand('copy').
  */
 export const copyText = async (text: string): Promise<void> => {

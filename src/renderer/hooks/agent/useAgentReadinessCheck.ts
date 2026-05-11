@@ -38,8 +38,7 @@ export type AgentReadinessState = {
 type UseAgentReadinessCheckOptions = {
   // The backend type to check (for ACP conversations)
   backend?: AgentBackend;
-  // Conversation type ('gemini' or 'acp')
-  conversationType: 'gemini' | 'acp' | 'codex';
+  conversationType: 'acp' | 'codex';
   // Whether to auto-check on mount
   autoCheck?: boolean;
   // Callback when a ready agent is found
@@ -47,16 +46,8 @@ type UseAgentReadinessCheckOptions = {
 };
 
 const AGENT_NAMES: Partial<Record<AgentBackend, string>> = {
-  claude: 'Claude',
+  cursor: 'Cursor',
   codex: 'Codex',
-  codebuddy: 'CodeBuddy',
-  opencode: 'OpenCode',
-  gemini: 'Gemini',
-  qwen: 'Qwen Code',
-  droid: 'Droid',
-  goose: 'Goose',
-  auggie: 'Auggie',
-  kimi: 'Kimi',
 };
 
 /**
@@ -73,12 +64,12 @@ export function useAgentReadinessCheck(options: UseAgentReadinessCheckOptions) {
     availableAgents: [],
     bestAgent: null,
     progress: 0,
-    currentAgent: conversationType === 'gemini' ? 'gemini' : (backend as AgentBackend) || null,
+    currentAgent: (backend as AgentBackend) || null,
   });
 
   // Check the current agent's readiness
   const checkCurrentAgent = useCallback(async (): Promise<boolean> => {
-    const agentToCheck = conversationType === 'gemini' ? 'gemini' : backend;
+    const agentToCheck = backend;
     if (!agentToCheck) return true;
 
     setState((prev) => ({
@@ -122,7 +113,7 @@ export function useAgentReadinessCheck(options: UseAgentReadinessCheckOptions) {
 
   // Find available alternative agents
   const findAlternatives = useCallback(async () => {
-    const currentAgentBackend = conversationType === 'gemini' ? 'gemini' : backend;
+    const currentAgentBackend = backend;
 
     setState((prev) => ({
       ...prev,
@@ -267,7 +258,7 @@ export function useAgentReadinessCheck(options: UseAgentReadinessCheckOptions) {
       availableAgents: [],
       bestAgent: null,
       progress: 0,
-      currentAgent: conversationType === 'gemini' ? 'gemini' : (backend as AgentBackend) || null,
+      currentAgent: (backend as AgentBackend) || null,
     });
   }, [backend, conversationType]);
 

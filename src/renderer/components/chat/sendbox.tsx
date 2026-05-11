@@ -38,8 +38,6 @@ import type { FileMetadata } from '@renderer/services/FileService';
 import { useUploadState } from '@renderer/hooks/file/useUploadState';
 import UploadProgressBar from '@renderer/components/media/UploadProgressBar';
 import { allSupportedExts } from '@renderer/services/FileService';
-import SpeechInputButton from '@/renderer/components/chat/SpeechInputButton';
-import { appendSpeechTranscript } from '@/renderer/hooks/system/useSpeechInput';
 import { getConversationInputHistory, isCaretOnFirstLine } from '@/renderer/utils/chat/messageHistory';
 import './sendbox.css';
 
@@ -793,15 +791,6 @@ const SendBox: React.FC<{
   }, []);
 
   useAddEventListener(
-    'gemini.selected.file.append',
-    (items: FileSelectionItem[]) => {
-      if (conversationContext?.type === 'gemini') {
-        handleExternalSelectionAppend(items);
-      }
-    },
-    [conversationContext?.type, handleExternalSelectionAppend]
-  );
-  useAddEventListener(
     'aionrs.selected.file.append',
     (items: FileSelectionItem[]) => {
       if (conversationContext?.type === 'aionrs') {
@@ -820,33 +809,6 @@ const SendBox: React.FC<{
     [conversationContext?.type, handleExternalSelectionAppend]
   );
   useAddEventListener(
-    'remote.selected.file.append',
-    (items: FileSelectionItem[]) => {
-      if (conversationContext?.type === 'remote') {
-        handleExternalSelectionAppend(items);
-      }
-    },
-    [conversationContext?.type, handleExternalSelectionAppend]
-  );
-  useAddEventListener(
-    'openclaw-gateway.selected.file.append',
-    (items: FileSelectionItem[]) => {
-      if (conversationContext?.type === 'openclaw-gateway') {
-        handleExternalSelectionAppend(items);
-      }
-    },
-    [conversationContext?.type, handleExternalSelectionAppend]
-  );
-  useAddEventListener(
-    'nanobot.selected.file.append',
-    (items: FileSelectionItem[]) => {
-      if (conversationContext?.type === 'nanobot') {
-        handleExternalSelectionAppend(items);
-      }
-    },
-    [conversationContext?.type, handleExternalSelectionAppend]
-  );
-  useAddEventListener(
     'codex.selected.file.append',
     (items: FileSelectionItem[]) => {
       if (conversationContext?.type === 'codex') {
@@ -859,23 +821,11 @@ const SendBox: React.FC<{
   const emitSelectedFileAppend = useCallback(
     (item: FileOrFolderItem) => {
       switch (conversationContext?.type) {
-        case 'gemini':
-          emitter.emit('gemini.selected.file.append', [item]);
-          break;
         case 'aionrs':
           emitter.emit('aionrs.selected.file.append', [item]);
           break;
         case 'acp':
           emitter.emit('acp.selected.file.append', [item]);
-          break;
-        case 'remote':
-          emitter.emit('remote.selected.file.append', [item]);
-          break;
-        case 'openclaw-gateway':
-          emitter.emit('openclaw-gateway.selected.file.append', [item]);
-          break;
-        case 'nanobot':
-          emitter.emit('nanobot.selected.file.append', [item]);
           break;
         case 'codex':
           emitter.emit('codex.selected.file.append', [item]);
@@ -1241,15 +1191,6 @@ const SendBox: React.FC<{
     }
   };
 
-  const handleSpeechTranscript = useCallback(
-    (transcript: string) => {
-      const currentValue = latestInputRef.current;
-      setInputRef.current(appendSpeechTranscript(currentValue, transcript));
-    },
-    [latestInputRef, setInputRef]
-  );
-  const speechLocale = i18n?.language || 'en-US';
-
   const hasDraftToSend = input.trim().length > 0 || domSnippets.length > 0;
 
   // Calculate button disabled state
@@ -1570,11 +1511,6 @@ const SendBox: React.FC<{
           </div>
           {isSingleLine && (
             <div className='flex items-center gap-2'>
-              <SpeechInputButton
-                disabled={disabled || isLoading || loading || isUploading}
-                locale={speechLocale}
-                onTranscript={handleSpeechTranscript}
-              />
               {sendButtonPrefix}
               {renderActionButtons()}
             </div>
@@ -1584,11 +1520,6 @@ const SendBox: React.FC<{
           <div className='flex items-center justify-between gap-2 w-full'>
             <div className={isMobile ? 'sendbox-tools sendbox-tools-scroll-mobile' : 'sendbox-tools'}>{tools}</div>
             <div className='flex items-center gap-2'>
-              <SpeechInputButton
-                disabled={disabled || isLoading || loading || isUploading}
-                locale={speechLocale}
-                onTranscript={handleSpeechTranscript}
-              />
               {sendButtonPrefix}
               {renderActionButtons()}
             </div>

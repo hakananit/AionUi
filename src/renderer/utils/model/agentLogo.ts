@@ -11,54 +11,13 @@
  */
 
 import AionLogo from '@/renderer/assets/logos/brand/aion.svg';
-import AuggieLogo from '@/renderer/assets/logos/brand/auggie.svg';
-import ClaudeLogo from '@/renderer/assets/logos/ai-major/claude.svg';
 import CursorLogo from '@/renderer/assets/logos/tools/coding/cursor.png';
-import CodeBuddyLogo from '@/renderer/assets/logos/tools/coding/codebuddy.svg';
-import CodexLogo from '@/renderer/assets/logos/tools/coding/codex.svg';
-import DroidLogo from '@/renderer/assets/logos/brand/droid.svg';
-import GeminiLogo from '@/renderer/assets/logos/ai-major/gemini.svg';
-import GitHubLogo from '@/renderer/assets/logos/tools/github.svg';
-import GooseLogo from '@/renderer/assets/logos/tools/goose.svg';
-import HermesLogo from '@/renderer/assets/logos/brand/hermes.svg';
-import SnowLogo from '@/renderer/assets/logos/tools/coding/snow.png';
-import KimiLogo from '@/renderer/assets/logos/ai-china/kimi.svg';
-import MistralLogo from '@/renderer/assets/logos/ai-major/mistral.svg';
-import NanobotLogo from '@/renderer/assets/logos/tools/nanobot.svg';
-import OpenClawLogo from '@/renderer/assets/logos/tools/openclaw.svg';
-import OpenCodeLogoDark from '@/renderer/assets/logos/tools/coding/opencode-dark.svg';
-import OpenCodeLogoLight from '@/renderer/assets/logos/tools/coding/opencode-light.svg';
-import QoderLogo from '@/renderer/assets/logos/tools/coding/qoder.png';
-import QwenLogo from '@/renderer/assets/logos/ai-china/qwen.svg';
 
 /**
  * Agent Logo 映射表
  * Agent Logo mapping table
- *
- * 注意：key 使用小写，支持多种变体（如 openclaw-gateway 和 openclaw）
- * Note: keys are lowercase, supports multiple variants (e.g., openclaw-gateway and openclaw)
  */
 const AGENT_LOGO_MAP = {
-  aionrs: AionLogo,
-  claude: ClaudeLogo,
-  gemini: GeminiLogo,
-  qwen: QwenLogo,
-  codex: CodexLogo,
-  codebuddy: CodeBuddyLogo,
-  droid: DroidLogo,
-  goose: GooseLogo,
-  hermes: HermesLogo,
-  snow: SnowLogo,
-  auggie: AuggieLogo,
-  kimi: KimiLogo,
-  opencode: OpenCodeLogoLight,
-  copilot: GitHubLogo,
-  openclaw: OpenClawLogo,
-  'openclaw-gateway': OpenClawLogo,
-  vibe: MistralLogo,
-  nanobot: NanobotLogo,
-  remote: OpenClawLogo,
-  qoder: QoderLogo,
   cursor: CursorLogo,
 } as const satisfies Record<string, string>;
 
@@ -83,9 +42,6 @@ function isDarkTheme(): boolean {
 export function getAgentLogo(agent: string | undefined | null): string | null {
   if (!agent) return null;
   const key = agent.toLowerCase() as keyof typeof AGENT_LOGO_MAP;
-  if (key === 'opencode') {
-    return isDarkTheme() ? OpenCodeLogoDark : OpenCodeLogoLight;
-  }
   return AGENT_LOGO_MAP[key] || null;
 }
 

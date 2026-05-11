@@ -23,20 +23,6 @@ export const ConfigStorage = storage.buildStorage<IConfigStorageRefer>('agent.co
 export const EnvStorage = storage.buildStorage<IEnvStorageRefer>('agent.env');
 
 export interface IConfigStorageRefer {
-  'gemini.config': {
-    authType: string;
-    proxy: string;
-    GOOGLE_GEMINI_BASE_URL?: string;
-    /** @deprecated Use accountProjects instead. Kept for backward compatibility migration. */
-    GOOGLE_CLOUD_PROJECT?: string;
-    /** 按 Google 账号存储的 GCP 项目 ID / GCP project IDs stored per Google account */
-    accountProjects?: Record<string, string>;
-    yoloMode?: boolean;
-    /** Preferred session mode for new conversations / 新会话的默认模式 */
-    preferredMode?: string;
-    /** Preferred model ID for new conversations / 新会话的默认模型 */
-    preferredModelId?: string;
-  };
   'codex.config'?: {
     cliPath?: string;
     yoloMode?: boolean;
@@ -81,21 +67,9 @@ export interface IConfigStorageRefer {
   colorScheme: string;
   /** Persisted app-wide UI zoom factor for Display settings */
   'ui.zoomFactor'?: number;
-  /** 桌面模式下是否自动启用 WebUI / Auto-enable WebUI in desktop mode */
-  'webui.desktop.enabled'?: boolean;
-  /** 桌面模式下是否允许远程访问 / Allow remote access in desktop mode */
-  'webui.desktop.allowRemote'?: boolean;
-  /** 桌面模式下 WebUI 端口 / WebUI port in desktop mode */
-  'webui.desktop.port'?: number;
   customCss: string; // 自定义 CSS 样式
   'css.themes': ICssTheme[]; // 自定义 CSS 主题列表 / Custom CSS themes list
   'css.activeThemeId': string; // 当前激活的主题 ID / Currently active theme ID
-  'gemini.defaultModel': string | { id: string; useModel: string };
-  'aionrs.config'?: {
-    /** Preferred session mode for new conversations / 新会话的默认模式 */
-    preferredMode?: string;
-  };
-  'aionrs.defaultModel'?: { id: string; useModel: string };
   'tools.imageGenerationModel': TProviderWithModel & {
     /** @deprecated Image generation is now controlled via built-in MCP server toggle */
     switch?: boolean;
@@ -130,61 +104,6 @@ export interface IConfigStorageRefer {
   'system.keepAwake'?: boolean;
   // Automatically preview newly created Office files in the current workspace
   'system.autoPreviewOfficeFiles'?: boolean;
-  // Telegram assistant default model / Telegram 助手默认模型
-  'assistant.telegram.defaultModel'?: {
-    id: string;
-    useModel: string;
-  };
-  // Telegram assistant agent selection / Telegram 助手所使用的 Agent
-  'assistant.telegram.agent'?: {
-    backend: string;
-    customAgentId?: string;
-    name?: string;
-  };
-  // Lark assistant default model / Lark 助手默认模型
-  'assistant.lark.defaultModel'?: {
-    id: string;
-    useModel: string;
-  };
-  // Lark assistant agent selection / Lark 助手所使用的 Agent
-  'assistant.lark.agent'?: {
-    backend: string;
-    customAgentId?: string;
-    name?: string;
-  };
-  // DingTalk assistant default model / DingTalk 助手默认模型
-  'assistant.dingtalk.defaultModel'?: {
-    id: string;
-    useModel: string;
-  };
-  // DingTalk assistant agent selection / DingTalk 助手所使用的 Agent
-  'assistant.dingtalk.agent'?: {
-    backend: string;
-    customAgentId?: string;
-    name?: string;
-  };
-  // WeChat assistant default model / WeChat 助手默认模型
-  'assistant.weixin.defaultModel'?: {
-    id: string;
-    useModel: string;
-  };
-  // WeChat assistant agent selection / WeChat 助手所使用的 Agent
-  'assistant.weixin.agent'?: {
-    backend: string;
-    customAgentId?: string;
-    name?: string;
-  };
-  // WeCom assistant default model / 企业微信助手默认模型
-  'assistant.wecom.defaultModel'?: {
-    id: string;
-    useModel: string;
-  };
-  // WeCom assistant agent selection / 企业微信助手所使用的 Agent
-  'assistant.wecom.agent'?: {
-    backend: string;
-    customAgentId?: string;
-    name?: string;
-  };
   // Skills Market: whether the aionui-skills builtin skill is enabled
   'skillsMarket.enabled'?: boolean;
   // Desktop Pet: whether the desktop pet feature is enabled
@@ -209,7 +128,7 @@ export interface IEnvStorageRefer {
  * Conversation source type - identifies where the conversation was created
  * 会话来源类型 - 标识会话创建的来源
  */
-export type ConversationSource = 'aionui' | 'telegram' | 'lark' | 'dingtalk' | 'weixin' | 'wecom' | (string & {});
+export type ConversationSource = 'aionui';
 
 interface IChatConversation<T, Extra> {
   createTime: number;
@@ -233,41 +152,12 @@ export interface TokenUsageData {
 }
 
 export type TChatConversation =
-  | IChatConversation<
-      'gemini',
-      {
-        workspace: string;
-        customWorkspace?: boolean; // true 用户指定工作目录 false 系统默认工作目录
-        webSearchEngine?: 'google' | 'default'; // 搜索引擎配置
-        lastTokenUsage?: TokenUsageData; // 上次的 token 使用统计
-        contextFileName?: string;
-        contextContent?: string;
-        // 系统规则支持 / System rules support
-        presetRules?: string; // 系统规则，在初始化时注入 / System rules, injected at initialization
-        /** 启用的 skills 列表，用于过滤 SkillManager 加载的 skills / Enabled skills list for filtering SkillManager skills */
-        enabledSkills?: string[];
-        /** 实际加载的 skills 快照（首次消息时持久化）/ Snapshot of actually loaded skills (persisted on first message) */
-        loadedSkills?: Array<{ name: string; description: string }>;
-        /** 预设助手 ID，用于在会话面板显示助手名称和头像 / Preset assistant ID for displaying name and avatar in conversation panel */
-        presetAssistantId?: string;
-        /** 是否置顶会话 / Whether this conversation is pinned */
-        pinned?: boolean;
-        /** 置顶时间戳（毫秒）/ Pin timestamp in milliseconds */
-        pinnedAt?: number;
-        /** Persisted session mode for resume support / 持久化的会话模式，用于恢复 */
-        sessionMode?: string;
-        /** Explicit marker for temporary health-check conversations */
-        isHealthCheck?: boolean;
-        /** Cron job ID that spawned this conversation */
-        cronJobId?: string;
-      }
-    >
   | Omit<
       IChatConversation<
         'acp',
         {
           workspace?: string;
-          backend: AcpBackend;
+          backend: import('@/common/types/acpTypes').AcpBackend;
           cliPath?: string;
           customWorkspace?: boolean;
           agentName?: string;
@@ -342,135 +232,33 @@ export type TChatConversation =
       >,
       'model'
     >
-  | Omit<
-      IChatConversation<
-        'openclaw-gateway',
-        {
-          workspace?: string;
-          backend?: AcpBackendAll;
-          agentName?: string;
-          customWorkspace?: boolean;
-          /** Gateway configuration */
-          gateway?: {
-            host?: string;
-            port?: number;
-            token?: string;
-            password?: string;
-            useExternalGateway?: boolean;
-            cliPath?: string;
-          };
-          /** Session key for resume */
-          sessionKey?: string;
-          /** Runtime validation snapshot used for post-switch strong checks */
-          runtimeValidation?: {
-            expectedWorkspace?: string;
-            expectedBackend?: string;
-            expectedAgentName?: string;
-            expectedCliPath?: string;
-            expectedModel?: string;
-            expectedIdentityHash?: string | null;
-            switchedAt?: number;
-          };
-          /** 启用的 skills 列表 / Enabled skills list */
-          enabledSkills?: string[];
-          /** 实际加载的 skills 快照 / Snapshot of actually loaded skills */
-          loadedSkills?: Array<{ name: string; description: string }>;
-          /** 预设助手 ID / Preset assistant ID */
-          presetAssistantId?: string;
-          /** 是否置顶会话 / Whether this conversation is pinned */
-          pinned?: boolean;
-          /** 置顶时间戳（毫秒）/ Pin timestamp in milliseconds */
-          pinnedAt?: number;
-          /** Explicit marker for temporary health-check conversations */
-          isHealthCheck?: boolean;
-          /** Cron job ID that spawned this conversation */
-          cronJobId?: string;
-        }
-      >,
-      'model'
-    >
-  | Omit<
-      IChatConversation<
-        'nanobot',
-        {
-          workspace?: string;
-          customWorkspace?: boolean;
-          /** 启用的 skills 列表 / Enabled skills list */
-          enabledSkills?: string[];
-          /** 实际加载的 skills 快照 / Snapshot of actually loaded skills */
-          loadedSkills?: Array<{ name: string; description: string }>;
-          /** 预设助手 ID / Preset assistant ID */
-          presetAssistantId?: string;
-          /** 是否置顶会话 / Whether this conversation is pinned */
-          pinned?: boolean;
-          /** 置顶时间戳（毫秒）/ Pin timestamp in milliseconds */
-          pinnedAt?: number;
-          /** Explicit marker for temporary health-check conversations */
-          isHealthCheck?: boolean;
-          /** Cron job ID that spawned this conversation */
-          cronJobId?: string;
-        }
-      >,
-      'model'
-    >
-  | Omit<
-      IChatConversation<
-        'remote',
-        {
-          workspace?: string;
-          customWorkspace?: boolean;
-          /** Remote agent config ID (FK to remote_agents table) */
-          remoteAgentId: string;
-          /** Remote session key for resume */
-          sessionKey?: string;
-          /** Enabled skills list */
-          enabledSkills?: string[];
-          /** Snapshot of actually loaded skills */
-          loadedSkills?: Array<{ name: string; description: string }>;
-          /** Preset assistant ID */
-          presetAssistantId?: string;
-          /** Whether this conversation is pinned */
-          pinned?: boolean;
-          /** Pin timestamp in milliseconds */
-          pinnedAt?: number;
-          /** Explicit marker for temporary health-check conversations */
-          isHealthCheck?: boolean;
-          /** Cron job ID that spawned this conversation */
-          cronJobId?: string;
-        }
-      >,
-      'model'
-    >
   | IChatConversation<
       'aionrs',
       {
         workspace: string;
-        customWorkspace?: boolean;
         proxy?: string;
-        /** System rules injected at initialization */
+        yoloMode?: boolean;
         presetRules?: string;
-        /** Enabled skills list */
-        enabledSkills?: string[];
-        /** Snapshot of actually loaded skills */
-        loadedSkills?: Array<{ name: string; description: string }>;
-        /** Preset assistant ID */
-        presetAssistantId?: string;
-        /** Whether this conversation is pinned */
-        pinned?: boolean;
-        /** Pin timestamp in milliseconds */
-        pinnedAt?: number;
-        /** Max tokens per response */
         maxTokens?: number;
-        /** Max agentic turns */
         maxTurns?: number;
-        /** Persisted session mode for resume support */
         sessionMode?: string;
-        /** Explicit marker for temporary health-check conversations */
-        isHealthCheck?: boolean;
-        /** Last token usage stats */
+        sessionId?: string;
+        resume?: string;
+        /** Coordination MCP for team sessions / 团队会话的协调 MCP */
+        teamMcpStdioConfig?: {
+          name: string;
+          command: string;
+          args: string[];
+          env: Array<{ name: string; value: string }>;
+        };
+        /** Snapshot of actually loaded skills / 实际加载的 skills 快照 */
+        loadedSkills?: Array<{ name: string; description: string }>;
+        /** Whether this conversation is pinned / 是否置顶会话 */
+        pinned?: boolean;
+        /** Pin timestamp in milliseconds / 置顶时间戳（毫秒） */
+        pinnedAt?: number;
+        /** Last token usage from aionrs / aionrs 的最后 token 使用情况 */
         lastTokenUsage?: TokenUsageData;
-        /** Cron job ID that spawned this conversation */
-        cronJobId?: string;
       }
     >;
 

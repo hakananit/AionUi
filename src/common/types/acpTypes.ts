@@ -7,36 +7,14 @@
 export const CODEX_ACP_BRIDGE_VERSION = '0.9.5';
 export const CODEX_ACP_NPX_PACKAGE = `@zed-industries/codex-acp@${CODEX_ACP_BRIDGE_VERSION}`;
 
-export const CLAUDE_ACP_BRIDGE_VERSION = '0.29.2';
-export const CLAUDE_ACP_NPX_PACKAGE = `@agentclientprotocol/claude-agent-acp@${CLAUDE_ACP_BRIDGE_VERSION}`;
-
-export const CODEBUDDY_ACP_BRIDGE_VERSION = '2.73.0';
-export const CODEBUDDY_ACP_NPX_PACKAGE = `@tencent-ai/codebuddy-code@${CODEBUDDY_ACP_BRIDGE_VERSION}`;
-
 // ACP 后端类型定义 — 仅包含 ACP 协议相关的后端
 // ACP backend types — only ACP protocol backends
 export type AcpBackendAll =
-  | 'claude' // Claude ACP
-  // | 'gemini' // Google Gemini — not an ACP agent, handled by AgentRegistry directly
-  | 'qwen' // Qwen Code ACP
-  | 'codex' // OpenAI Codex ACP (via codex-acp bridge)
-  | 'codebuddy' // Tencent CodeBuddy Code CLI
-  | 'droid' // Factory Droid CLI (ACP via `droid exec --output-format acp`)
-  | 'goose' // Block's Goose CLI
-  | 'auggie' // Augment Code CLI
-  | 'kimi' // Kimi CLI (Moonshot)
-  | 'opencode' // OpenCode CLI
-  | 'copilot' // GitHub Copilot CLI
-  | 'qoder' // Qoder CLI
-  | 'vibe' // Mistral Vibe CLI
   | 'cursor' // Cursor AI Agent CLI
-  | 'kiro' // Kiro CLI (AWS)
-  | 'hermes' // Hermes Agent CLI (Nous Research)
-  | 'snow' // Snow AI CLI
   | 'custom'; // User-configured custom ACP agent (extension adapters)
 
 // Superset type covering all execution engine backends (ACP + non-ACP).
-export type AgentBackend = AcpBackendAll | 'gemini' | 'remote' | 'aionrs' | 'nanobot' | 'openclaw-gateway';
+export type AgentBackend = AcpBackendAll | 'codex';
 
 /**
  * 潜在的 ACP CLI 工具列表
@@ -116,16 +94,16 @@ export const POTENTIAL_ACP_CLIS: PotentialAcpCli[] = new Proxy([] as PotentialAc
 
 /**
  * ACP 后端 Agent 配置
- * 用于内置后端（claude, gemini, qwen）和用户自定义 Agent
+ * 用于内置后端 (cursor) 和用户自定义 Agent
  *
  * Configuration for an ACP backend agent.
- * Used for both built-in backends (claude, gemini, qwen) and custom user agents.
+ * Used for both built-in backends (cursor) and custom user agents.
  */
 export interface AcpBackendConfig {
-  /** 后端唯一标识符 / Unique identifier for the backend (e.g., 'claude', 'gemini', 'custom') */
+  /** 后端唯一标识符 / Unique identifier for the backend (e.g., 'cursor', 'custom') */
   id: string;
 
-  /** UI 显示名称 / Display name shown in the UI (e.g., 'Goose', 'Claude Code') */
+  /** UI 显示名称 / Display name shown in the UI (e.g., 'Cursor Agent') */
   name: string;
 
   /** 本地化名称 / Localized names (e.g., { 'zh-CN': '...', 'en-US': '...' }) */
@@ -145,7 +123,7 @@ export interface AcpBackendConfig {
    * 仅当二进制文件名与 id 不同时需要
    *
    * CLI command name used for detection via `which` command.
-   * Example: 'goose', 'claude', 'qwen'
+   * Example: 'agent'
    * Only needed if the binary name differs from id.
    */
   cliCommand?: string;
@@ -203,15 +181,11 @@ export interface AcpBackendConfig {
   /**
    * 启用 ACP 模式时的参数
    * 不同 CLI 使用不同约定：
-   *   - ['--experimental-acp'] 用于 claude（未指定时的默认值）
-   *   - ['--acp'] 用于 qwen, auggie
-   *   - ['acp'] 用于 goose（子命令）
+   *   - ['acp'] 用于 cursor
    *
    * Arguments to enable ACP mode when spawning the CLI.
    * Different CLIs use different conventions:
-   *   - ['--experimental-acp'] for claude (default if not specified)
-   *   - ['--acp'] for qwen, auggie
-   *   - ['acp'] for goose (subcommand)
+   *   - ['acp'] for cursor
    * If not specified, defaults to ['--experimental-acp'].
    */
   acpArgs?: string[];
@@ -245,19 +219,15 @@ export interface AcpBackendConfig {
   /**
    * 此预设的主 Agent 类型（仅 isPreset=true 时生效）
    * 决定选择此预设时创建哪种类型的对话
-   * - 'gemini': 创建 Gemini 对话
-   * - 'claude': 创建使用 Claude 后端的 ACP 对话
+   * - 'cursor': 创建 Cursor 对话
    * - 'codex': 创建 Codex 对话
-   * - 任意字符串: 扩展贡献的 ACP 适配器 ID（如 'ext-buddy'）
-   * 为向后兼容默认为 'gemini'
+   * - 任意字符串: 扩展贡献的 ACP 适配器 ID
    *
    * The primary agent type for this preset (only applies when isPreset=true).
    * Determines which conversation type to create when selecting this preset.
-   * - 'gemini': Creates a Gemini conversation
-   * - 'claude': Creates an ACP conversation with Claude backend
+   * - 'cursor': Creates a Cursor conversation
    * - 'codex': Creates a Codex conversation
-   * - any string: Extension-contributed ACP adapter ID (e.g. 'ext-buddy')
-   * Defaults to 'gemini' for backward compatibility.
+   * - any string: Extension-contributed ACP adapter ID
    */
   presetAgentType?: string;
 
@@ -303,136 +273,6 @@ export interface AcpBackendConfig {
 
 // 所有后端配置 - 包括暂时禁用的 / All backend configurations - including temporarily disabled ones
 export const ACP_BACKENDS_ALL: Record<AcpBackendAll, AcpBackendConfig> = {
-  claude: {
-    id: 'claude',
-    name: 'Claude Code',
-    cliCommand: 'claude',
-    authRequired: true,
-    enabled: true,
-    supportsStreaming: false,
-    skillsDirs: ['.claude/skills'],
-  },
-  // gemini: not an ACP agent — handled by AgentRegistry as a dedicated DetectedAgentKind
-  // gemini: {
-  //   id: 'gemini',
-  //   name: 'Google CLI',
-  //   cliCommand: 'gemini',
-  //   authRequired: true,
-  //   enabled: false,
-  //   supportsStreaming: true,
-  //   skillsDirs: ['.gemini/skills'],
-  // },
-  qwen: {
-    id: 'qwen',
-    name: 'Qwen Code',
-    cliCommand: 'qwen',
-    defaultCliPath: 'npx @qwen-code/qwen-code',
-    authRequired: true,
-    enabled: true, // ✅ 已验证支持：Qwen CLI v0.0.10+ 支持 --acp
-    supportsStreaming: true,
-    acpArgs: ['--acp'], // Use --acp instead of deprecated --experimental-acp
-    skillsDirs: ['.qwen/skills'],
-  },
-  codex: {
-    id: 'codex',
-    name: 'Codex',
-    cliCommand: 'codex', // Detect local codex CLI (codex-acp bridge invokes it)
-    defaultCliPath: `npx ${CODEX_ACP_NPX_PACKAGE}`,
-    authRequired: true, // Needs OPENAI_API_KEY or ChatGPT auth
-    enabled: true, // ✅ Codex via codex-acp ACP bridge
-    supportsStreaming: false,
-    acpArgs: [], // codex-acp is ACP by default, no flag needed
-    skillsDirs: ['.codex/skills'],
-  },
-  codebuddy: {
-    id: 'codebuddy',
-    name: 'CodeBuddy',
-    cliCommand: 'codebuddy',
-    defaultCliPath: `npx ${CODEBUDDY_ACP_NPX_PACKAGE}`,
-    authRequired: true,
-    enabled: true, // ✅ Tencent CodeBuddy Code CLI，使用 `codebuddy --acp` 启动
-    supportsStreaming: false,
-    acpArgs: ['--acp'], // codebuddy 使用 --acp flag
-    skillsDirs: ['.codebuddy/skills'],
-  },
-  goose: {
-    id: 'goose',
-    name: 'Goose',
-    cliCommand: 'goose',
-    authRequired: false,
-    enabled: true, // ✅ Block's Goose CLI，使用 `goose acp` 启动
-    supportsStreaming: false,
-    acpArgs: ['acp'], // goose 使用子命令而非 flag
-    skillsDirs: ['.goose/skills'],
-  },
-  auggie: {
-    id: 'auggie',
-    name: 'Augment Code',
-    cliCommand: 'auggie',
-    authRequired: false,
-    enabled: true, // ✅ Augment Code CLI，使用 `auggie --acp` 启动
-    supportsStreaming: false,
-    acpArgs: ['--acp'], // auggie 使用 --acp flag
-  },
-  kimi: {
-    id: 'kimi',
-    name: 'Kimi CLI',
-    cliCommand: 'kimi',
-    authRequired: false,
-    enabled: true, // ✅ Kimi CLI (Moonshot)，使用 `kimi acp` 启动
-    supportsStreaming: false,
-    acpArgs: ['acp'], // kimi 使用 acp 子命令
-    skillsDirs: ['.kimi/skills'],
-  },
-  opencode: {
-    id: 'opencode',
-    name: 'OpenCode',
-    cliCommand: 'opencode',
-    authRequired: false,
-    enabled: true, // ✅ OpenCode CLI，使用 `opencode acp` 启动
-    supportsStreaming: false,
-    acpArgs: ['acp'], // opencode 使用 acp 子命令
-    skillsDirs: ['.opencode/skills'],
-  },
-  droid: {
-    id: 'droid',
-    name: 'Factory Droid',
-    cliCommand: 'droid',
-    // Droid uses FACTORY_API_KEY from environment, not an interactive auth flow.
-    authRequired: false,
-    enabled: true, // ✅ Factory docs: `droid exec --output-format acp` (JetBrains/Zed ACP integration)
-    supportsStreaming: false,
-    acpArgs: ['exec', '--output-format', 'acp'],
-    skillsDirs: ['.factory/skills'],
-  },
-  copilot: {
-    id: 'copilot',
-    name: 'GitHub Copilot',
-    cliCommand: 'copilot',
-    authRequired: false,
-    enabled: true, // ✅ GitHub Copilot CLI，使用 `copilot --acp --stdio` 启动
-    supportsStreaming: false,
-    acpArgs: ['--acp', '--stdio'], // copilot 使用 --acp --stdio 启动 ACP mode
-  },
-  qoder: {
-    id: 'qoder',
-    name: 'Qoder CLI',
-    cliCommand: 'qodercli',
-    authRequired: false,
-    enabled: true, // ✅ Qoder CLI，使用 `qodercli --acp` 启动
-    supportsStreaming: false,
-    acpArgs: ['--acp'], // qoder 使用 --acp flag
-  },
-  vibe: {
-    id: 'vibe',
-    name: 'Mistral Vibe',
-    cliCommand: 'vibe-acp',
-    authRequired: false,
-    enabled: true, // ✅ Mistral Vibe CLI，使用 `vibe-acp` 启动
-    supportsStreaming: false,
-    acpArgs: [],
-    skillsDirs: ['.vibe/skills'],
-  },
   cursor: {
     id: 'cursor',
     name: 'Cursor Agent',
@@ -445,40 +285,12 @@ export const ACP_BACKENDS_ALL: Record<AcpBackendAll, AcpBackendConfig> = {
     acpArgs: ['acp'], // Cursor uses `agent acp` subcommand
     skillsDirs: ['.cursor/skills'],
   },
-  kiro: {
-    id: 'kiro',
-    name: 'Kiro',
-    cliCommand: 'kiro-cli',
-    authRequired: true, // Requires Kiro / AWS Builder ID login
-    enabled: true, // ✅ Kiro CLI, launched via `kiro-cli acp`
-    supportsStreaming: false,
-    acpArgs: ['acp'], // Kiro uses `kiro-cli acp` subcommand
-  },
-  hermes: {
-    id: 'hermes',
-    name: 'Hermes Agent',
-    description: 'AI agent by Nous Research with 90+ tools, persistent memory, and multi-platform support',
-    cliCommand: 'hermes',
-    authRequired: true,
-    enabled: true, // ✅ Nous Research Hermes Agent，使用 `hermes acp` 启动
-    supportsStreaming: false,
-    acpArgs: ['acp'], // hermes 使用 acp 子命令
-  },
-  snow: {
-    id: 'snow',
-    name: 'Snow CLI',
-    cliCommand: 'snow',
-    authRequired: false,
-    enabled: true,
-    supportsStreaming: false,
-    acpArgs: ['--acp'],
-  },
   custom: {
     id: 'custom',
     name: 'Custom Agent',
     cliCommand: undefined, // User-configured via settings
     authRequired: false,
-    enabled: true,
+    enabled: false,
     supportsStreaming: false,
   },
 };
@@ -494,10 +306,7 @@ export type AcpBackend = keyof typeof ACP_BACKENDS_ALL;
  * Skill directories for non-ACP agents (DetectedAgentKind not in ACP_BACKENDS_ALL).
  * These agents have their own execution engines but still support native skill discovery.
  */
-const NON_ACP_SKILLS_DIRS: Record<string, string[]> = {
-  gemini: ['.gemini/skills'],
-  aionrs: ['.aionrs/skills'],
-};
+const NON_ACP_SKILLS_DIRS: Record<string, string[]> = {};
 
 /**
  * 检查给定 agent 类型/backend 是否支持原生 skill 发现

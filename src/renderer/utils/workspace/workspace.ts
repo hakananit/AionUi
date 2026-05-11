@@ -12,7 +12,7 @@
 /**
  * Pattern to match temporary workspace naming convention: <backend>-temp-<timestamp>
  * Matches any workspace ending with -temp- followed by digits (Unix timestamp)
- * Examples: codex-temp-1234567890, gemini-temp-1234567890, claude-temp-1234567890
+ * Examples: codex-temp-1234567890, cursor-temp-1234567890, claude-temp-1234567890
  */
 const TEMP_WORKSPACE_REGEX = /-temp-\d+$/i;
 

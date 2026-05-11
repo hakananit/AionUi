@@ -207,3 +207,6 @@ graphify-out/
 .graphify_python
 
 .snow/
+
+# Local portable Node
+node-v22.13.1-darwin-arm64/

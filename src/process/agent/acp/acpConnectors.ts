@@ -16,12 +16,7 @@ import { promisify } from 'util';
 import { promises as fs, rmSync } from 'fs';
 import os from 'os';
 import path from 'path';
-import {
-  CLAUDE_ACP_NPX_PACKAGE,
-  CODEBUDDY_ACP_NPX_PACKAGE,
-  CODEX_ACP_BRIDGE_VERSION,
-  CODEX_ACP_NPX_PACKAGE,
-} from '@/common/types/acpTypes';
+import { CODEX_ACP_BRIDGE_VERSION, CODEX_ACP_NPX_PACKAGE } from '@/common/types/acpTypes';
 import {
   findSuitableNodeBin,
   getEnhancedEnv,
@@ -30,7 +25,6 @@ import {
   normalizeNpxArgsForBundledBun,
   resolveNpxPath,
 } from '@process/utils/shellEnv';
-import { readClaudeProviderEnvFromCcSwitch } from '@process/services/ccSwitchModelSource';
 import { mainWarn } from '@process/utils/mainLogger';
 import { getPlatformServices } from '@/common/platform';
 
@@ -152,9 +146,6 @@ export async function prepareCleanEnv(): Promise<Record<string, string | undefin
   delete merged.NODE_OPTIONS;
   delete merged.NODE_INSPECT;
   delete merged.NODE_DEBUG;
-  // Remove CLAUDECODE env var to prevent claude-agent-sdk from detecting
-  // a nested session when AionUi itself is launched from Claude Code.
-  delete merged.CLAUDECODE;
   // Strip npm lifecycle vars inherited from parent `npm start` process.
   // These (npm_config_*, npm_lifecycle_*, npm_package_*) can cause npx to
   // behave as if running inside an npm script, interfering with package
@@ -329,7 +320,7 @@ export function createGenericSpawnConfig(
 
 export type SpawnResult = { child: ChildProcess; isDetached: boolean };
 
-/** Return type for npx backend prepare functions (prepareClaude, prepareCodex, prepareCodebuddy). */
+/** Return type for npx backend prepare functions (prepareCodex). */
 export type NpxPrepareResult = {
   cleanEnv: Record<string, string | undefined>;
   npxCommand: string;
@@ -387,7 +378,7 @@ export function isBunCacheMoveFailed(stderr: string): boolean {
 
 /**
  * Spawn an npx-based ACP backend package.
- * Used by Claude, Codex, and CodeBuddy connectors.
+ * Used by Codex connector.
  */
 export function spawnNpxBackend(
   backend: string,
@@ -427,13 +418,6 @@ export function spawnNpxBackend(
   console.log(`[ACP-PERF] ${backend}: process spawned ${Date.now() - spawnStart}ms (bundled bun)`);
 
   return { child, isDetached: detached };
-}
-
-/** Prepare clean env + resolve npx for Claude ACP bridge. */
-async function prepareClaude(): Promise<NpxPrepareResult> {
-  const cleanEnv = await prepareCleanEnv();
-  Object.assign(cleanEnv, readClaudeProviderEnvFromCcSwitch());
-  return { cleanEnv, npxCommand: resolveNpxPath(cleanEnv) };
 }
 
 /** Prepare clean env + resolve npx + run diagnostics for Codex ACP bridge. */
@@ -484,28 +468,6 @@ async function prepareCodex(codexAcpPackage: string = CODEX_ACP_NPX_PACKAGE): Pr
   console.log(`[ACP-PERF] connect: codex diagnostics ${Date.now() - diagStart}ms`);
 
   return { cleanEnv, npxCommand: resolveNpxPath(cleanEnv) };
-}
-
-/** Prepare clean env + resolve npx + load MCP config for CodeBuddy. */
-async function prepareCodebuddy(): Promise<NpxPrepareResult> {
-  const cleanEnv = await prepareCleanEnv();
-
-  // Load user's MCP config if available (~/.codebuddy/mcp.json)
-  // CodeBuddy CLI in --acp mode does not auto-load mcp.json, so we pass it explicitly
-  const mcpConfigPath = path.join(os.homedir(), '.codebuddy', 'mcp.json');
-  const extraArgs: string[] = [];
-  try {
-    await fs.access(mcpConfigPath);
-    extraArgs.push('--mcp-config', mcpConfigPath);
-  } catch {
-    mainWarn('[ACP]', 'No CodeBuddy MCP config found, starting without MCP servers');
-  }
-
-  return {
-    cleanEnv,
-    npxCommand: resolveNpxPath(cleanEnv),
-    extraArgs,
-  };
 }
 
 /**
@@ -634,18 +596,6 @@ async function connectNpxBackend(config: {
 
 // ── Exported per-backend connect functions ───────────────────────────
 
-/** Connect to Claude ACP bridge via npx. */
-export function connectClaude(workingDir: string, hooks: NpxConnectHooks): Promise<void> {
-  return connectNpxBackend({
-    backend: 'claude',
-    npxPackage: CLAUDE_ACP_NPX_PACKAGE,
-    prepareFn: prepareClaude,
-    workingDir,
-    ...hooks,
-    detached: process.platform !== 'win32',
-  });
-}
-
 /** Connect to Codex ACP bridge via npx. */
 export function connectCodex(workingDir: string, hooks: NpxConnectHooks): Promise<void> {
   return (async () => {
@@ -712,17 +662,4 @@ export function connectCodex(workingDir: string, hooks: NpxConnectHooks): Promis
 
     throw lastError ?? new Error('Failed to start codex ACP bridge');
   })();
-}
-
-/** Connect to CodeBuddy ACP via npx. */
-export function connectCodebuddy(workingDir: string, hooks: NpxConnectHooks): Promise<void> {
-  return connectNpxBackend({
-    backend: 'codebuddy',
-    npxPackage: CODEBUDDY_ACP_NPX_PACKAGE,
-    prepareFn: prepareCodebuddy,
-    workingDir,
-    ...hooks,
-    extraArgs: ['--acp'],
-    detached: process.platform !== 'win32',
-  });
 }

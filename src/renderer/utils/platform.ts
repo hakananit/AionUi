@@ -87,31 +87,12 @@ export const resolveExtensionAssetUrl = (url: string | undefined): string | unde
     return url;
   }
 
-  if (absPath) {
-    return `/api/ext-asset?path=${encodeURIComponent(absPath)}`;
-  }
-
-  // WebUI: file:///{absPath} -> /api/ext-asset
-  if (url.startsWith('file://')) {
-    let filePath = decodeURIComponent(url.replace(/^file:\/\/\/?/, ''));
-    // On Windows, file:///C:/path → C:/path (strip leading / before drive letter)
-    if (/^\/[A-Za-z]:/.test(filePath)) {
-      filePath = filePath.slice(1);
-    }
-    return `/api/ext-asset?path=${encodeURIComponent(filePath)}`;
-  }
-
   return url;
 };
 
 /**
  * Open external URL in the appropriate context
  * - Electron: uses shell.openExternal via IPC (opens on local machine)
- * - WebUI: uses window.open in client browser (opens on remote client)
- *
- * 在适当的环境中打开外部链接
- * - Electron: 通过 IPC 调用 shell.openExternal（在本地机器打开）
- * - WebUI: 使用 window.open 在客户端浏览器打开（在远程客户端打开）
  */
 export const openExternalUrl = async (url: string): Promise<void> => {
   if (!url) return;
@@ -119,7 +100,5 @@ export const openExternalUrl = async (url: string): Promise<void> => {
   if (isElectronDesktop()) {
     const { ipcBridge } = await import('@/common');
     await ipcBridge.shell.openExternal.invoke(url);
-  } else {
-    window.open(url, '_blank', 'noopener,noreferrer');
   }
 };

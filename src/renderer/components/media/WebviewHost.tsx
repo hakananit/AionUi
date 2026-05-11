@@ -26,9 +26,6 @@ export interface WebviewHostProps {
   onDidFailLoad?: (errorCode: number, errorDescription: string) => void;
 }
 
-const MIN_ZOOM_FACTOR = 0.75;
-const MAX_ZOOM_FACTOR = 1.5;
-
 /**
  * Shared webview host component — extracted from URLViewer.
  *
@@ -58,7 +55,6 @@ const WebviewHost: React.FC<WebviewHostProps> = ({
   const [currentUrl, setCurrentUrl] = useState(url);
   const [inputUrl, setInputUrl] = useState(url);
   const [isLoading, setIsLoading] = useState(true);
-  const [zoomFactor, setZoomFactor] = useState(1);
   const [webviewReady, setWebviewReady] = useState(false);
 
   // Self-managed history stacks
@@ -66,20 +62,6 @@ const WebviewHost: React.FC<WebviewHostProps> = ({
   const historyForwardRef = useRef<string[]>([]);
   const [canGoBack, setCanGoBack] = useState(false);
   const [canGoForward, setCanGoForward] = useState(false);
-
-  const isStarOfficeUrl = useCallback((targetUrl: string): boolean => {
-    try {
-      const parsed = new URL(targetUrl);
-      const host = parsed.hostname.toLowerCase();
-      const localHost = host === '127.0.0.1' || host === 'localhost';
-      const knownPort = ['18791', '18888', '19000'].includes(parsed.port);
-      return localHost && knownPort;
-    } catch {
-      return false;
-    }
-  }, []);
-
-  const isStarOffice = isStarOfficeUrl(currentUrl);
 
   // Reset when props.url changes
   useEffect(() => {
@@ -90,20 +72,7 @@ const WebviewHost: React.FC<WebviewHostProps> = ({
     setCurrentUrl(url);
     setInputUrl(url);
     setIsLoading(true);
-    setZoomFactor(1);
-    setWebviewReady(false);
-    autoFitPendingRef.current = isStarOfficeUrl(url);
   }, [url]);
-
-  useEffect(() => {
-    const webviewEl = webviewRef.current as any;
-    if (!webviewReady || !webviewEl?.setZoomFactor) return;
-    try {
-      webviewEl.setZoomFactor(isStarOffice ? zoomFactor : 1);
-    } catch {
-      // Ignore zoom timing errors
-    }
-  }, [isStarOffice, zoomFactor, webviewReady]);
 
   // Navigate to new URL (add to history)
   const navigateToWithHistory = useCallback(
@@ -193,23 +162,6 @@ const WebviewHost: React.FC<WebviewHostProps> = ({
           }
           return;
         }
-
-        if (event.message.includes('__AIONUI_WEBVIEW_ZOOM__')) {
-          const match = event.message.match(/"deltaY":(-?\d+(\.\d+)?)/);
-          if (match && match[1]) {
-            const deltaY = Number(match[1]);
-            const step = deltaY < 0 ? 0.08 : -0.08;
-            setZoomFactor((prev) => {
-              const next = Number((prev + step).toFixed(2));
-              return Math.max(MIN_ZOOM_FACTOR, Math.min(MAX_ZOOM_FACTOR, next));
-            });
-          }
-          return;
-        }
-
-        if (event.message.includes('__AIONUI_WEBVIEW_ZOOM_RESET__')) {
-          setZoomFactor(1);
-        }
       } catch {
         // Ignore parse errors
       }
@@ -258,65 +210,6 @@ const WebviewHost: React.FC<WebviewHostProps> = ({
       `
         )
         .catch(() => {});
-
-      if (isStarOfficeUrl(currentUrl)) {
-        webviewEl
-          .executeJavaScript(
-            `
-          (function() {
-            if (window.__aionuiZoomInjected) return true;
-            window.__aionuiZoomInjected = true;
-            window.addEventListener('wheel', function(e) {
-              if (!(e.ctrlKey || e.metaKey)) return;
-              e.preventDefault();
-              console.log('__AIONUI_WEBVIEW_ZOOM__', JSON.stringify({ deltaY: e.deltaY }));
-            }, { passive: false, capture: true });
-            window.addEventListener('keydown', function(e) {
-              if (!(e.ctrlKey || e.metaKey)) return;
-              if (e.key === '0') {
-                e.preventDefault();
-                console.log('__AIONUI_WEBVIEW_ZOOM_RESET__');
-              }
-            }, { capture: true });
-            return true;
-          })();
-          true;
-        `
-          )
-          .catch(() => {});
-      }
-
-      if (isStarOfficeUrl(currentUrl) && autoFitPendingRef.current) {
-        window.setTimeout(() => {
-          const currentWebview = webviewRef.current;
-          const currentContent = contentRef.current;
-          if (!currentWebview || !currentContent) return;
-          void currentWebview
-            .executeJavaScript(
-              `
-            (() => {
-              try {
-                const stage = document.getElementById('main-stage');
-                const body = document.body;
-                const doc = document.documentElement;
-                const width = Math.max(stage?.scrollWidth || 0, body?.scrollWidth || 0, doc?.scrollWidth || 0, window.innerWidth || 0);
-                return { width };
-              } catch (e) {
-                return { width: window.innerWidth || 0 };
-              }
-            })();
-          `
-            )
-            .then((result: any) => {
-              const stageWidth = Number(result?.width || 0);
-              if (!stageWidth) return;
-              const next = Number((currentContent.clientWidth / stageWidth).toFixed(2));
-              setZoomFactor(Math.max(MIN_ZOOM_FACTOR, Math.min(MAX_ZOOM_FACTOR, next)));
-              autoFitPendingRef.current = false;
-            })
-            .catch(() => {});
-        }, 120);
-      }
     };
 
     const handleDidFinishLoad = () => {
@@ -348,7 +241,7 @@ const WebviewHost: React.FC<WebviewHostProps> = ({
       webviewEl.removeEventListener('did-finish-load', handleDidFinishLoad);
       webviewEl.removeEventListener('did-fail-load', handleDidFailLoad as EventListener);
     };
-  }, [navigateToWithHistory, currentUrl, onDidFinishLoad, onDidFailLoad, isStarOfficeUrl]);
+  }, [navigateToWithHistory, currentUrl, onDidFinishLoad, onDidFailLoad]);
 
   // Resize observer for content area
   useEffect(() => {
@@ -370,54 +263,6 @@ const WebviewHost: React.FC<WebviewHostProps> = ({
 
     return () => observer.disconnect();
   }, []);
-
-  const handleZoomReset = useCallback(() => {
-    if (!isStarOffice) return;
-    setZoomFactor(1);
-  }, [isStarOffice]);
-
-  const handleZoomFit = useCallback(() => {
-    const currentWebview = webviewRef.current;
-    const currentContent = contentRef.current;
-    if (!isStarOffice || !currentWebview || !currentContent) return;
-    void currentWebview
-      .executeJavaScript(
-        `
-      (() => {
-        try {
-          const stage = document.getElementById('main-stage');
-          const body = document.body;
-          const doc = document.documentElement;
-          const width = Math.max(stage?.scrollWidth || 0, body?.scrollWidth || 0, doc?.scrollWidth || 0, window.innerWidth || 0);
-          return { width };
-        } catch (e) {
-          return { width: window.innerWidth || 0 };
-        }
-      })();
-    `
-      )
-      .then((result: any) => {
-        const stageWidth = Number(result?.width || 0);
-        if (!stageWidth) return;
-        const next = Number((currentContent.clientWidth / stageWidth).toFixed(2));
-        setZoomFactor(Math.max(MIN_ZOOM_FACTOR, Math.min(MAX_ZOOM_FACTOR, next)));
-      })
-      .catch(() => {});
-  }, [isStarOffice]);
-
-  const handleOuterWheelZoom = useCallback(
-    (event: React.WheelEvent<HTMLDivElement>) => {
-      if (!isStarOffice) return;
-      if (!(event.ctrlKey || event.metaKey)) return;
-      event.preventDefault();
-      const step = event.deltaY < 0 ? 0.08 : -0.08;
-      setZoomFactor((prev) => {
-        const next = Number((prev + step).toFixed(2));
-        return Math.max(MIN_ZOOM_FACTOR, Math.min(MAX_ZOOM_FACTOR, next));
-      });
-    },
-    [isStarOffice]
-  );
 
   // Back
   const handleGoBack = useCallback(() => {
@@ -590,17 +435,6 @@ const WebviewHost: React.FC<WebviewHostProps> = ({
               <Refresh theme='outline' size={16} />
             )}
           </button>
-          {isStarOffice && (
-            <div className='flex items-center gap-6px ml-2px'>
-              <button onClick={handleZoomReset} className='toolbar-btn' title='Reset zoom'>
-                100%
-              </button>
-              <button onClick={handleZoomFit} className='toolbar-btn' title='Fit'>
-                Fit
-              </button>
-              <span className='toolbar-chip'>{Math.round(zoomFactor * 100)}%</span>
-            </div>
-          )}
           <form onSubmit={handleUrlSubmit} className='flex-1 ml-2px'>
             <input
               type='text'
@@ -627,7 +461,11 @@ const WebviewHost: React.FC<WebviewHostProps> = ({
         ref={contentRef}
         className='flex-1 overflow-hidden relative'
         style={{ minHeight: 0 }}
-        onWheel={handleOuterWheelZoom}
+        onWheel={(e) => {
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+          }
+        }}
       >
         <webview
           ref={webviewRef as any}

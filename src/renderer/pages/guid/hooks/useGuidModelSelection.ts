@@ -33,11 +33,10 @@ const isModelKeyAvailable = (key: string | null, providers?: IProvider[]) => {
 };
 
 /** Provider-based agent keys that share the model list UI */
-type ProviderAgentKey = 'gemini' | 'aionrs';
+type ProviderAgentKey = 'aionrs';
 
 /** Map agent key → storage key for persisting default model */
-const MODEL_STORAGE_KEY: Record<ProviderAgentKey, 'gemini.defaultModel' | 'aionrs.defaultModel'> = {
-  gemini: 'gemini.defaultModel',
+const MODEL_STORAGE_KEY: Record<ProviderAgentKey, 'aionrs.defaultModel'> = {
   aionrs: 'aionrs.defaultModel',
 };
 
@@ -53,9 +52,9 @@ export type GuidModelSelectionResult = {
 
 /**
  * Hook that manages Gemini model list and selection state for the Guid page.
- * @param agentKey - current provider-based agent ('gemini' | 'aionrs'), defaults to 'gemini'
+ * @param agentKey - current provider-based agent ('aionrs'), defaults to 'aionrs'
  */
-export const useGuidModelSelection = (agentKey: ProviderAgentKey = 'gemini'): GuidModelSelectionResult => {
+export const useGuidModelSelection = (agentKey: ProviderAgentKey = 'aionrs'): GuidModelSelectionResult => {
   const { geminiModeOptions, isGoogleAuth } = useGeminiGoogleAuthModels();
   const { data: modelConfig } = useSWR('model.config.welcome', () => {
     return ipcBridge.mode.getModelConfig.invoke().then((data) => {
@@ -68,27 +67,10 @@ export const useGuidModelSelection = (agentKey: ProviderAgentKey = 'gemini'): Gu
   const modelList = useMemo(() => {
     let allProviders: IProvider[] = [];
 
-    // Only expose the Gemini Google Auth provider when the current agent is
-    // 'gemini'. Other provider-based agents (e.g. aionrs) do not support
-    // Google login, so surfacing this provider would make the default-model
-    // fallback pick a Gemini auto model by mistake.
-    if (isGoogleAuth && agentKey === 'gemini') {
-      const geminiProvider: IProvider = {
-        id: uuid(),
-        name: 'Gemini Google Auth',
-        platform: 'gemini-with-google-auth',
-        baseUrl: '',
-        apiKey: '',
-        model: geminiModelValues,
-        capabilities: [{ type: 'text' }, { type: 'vision' }, { type: 'function_calling' }],
-      };
-      allProviders = [geminiProvider, ...(modelConfig || [])];
-    } else {
-      allProviders = modelConfig || [];
-    }
+    allProviders = modelConfig || [];
 
     return allProviders.filter(hasAvailableModels);
-  }, [agentKey, geminiModelValues, isGoogleAuth, modelConfig]);
+  }, [geminiModelValues, isGoogleAuth, modelConfig]);
 
   const geminiModeLookup = useMemo(() => {
     const lookup = new Map<string, (typeof geminiModeOptions)[number]>();

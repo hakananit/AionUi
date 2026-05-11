@@ -30,10 +30,6 @@ const ConversationSkillsIndicator: React.FC<ConversationSkillsIndicatorProps> = 
 
   if (!loadedSkills || loadedSkills.length === 0) return null;
 
-  const handleSkillClick = (skillName: string) => {
-    navigate(`/settings/capabilities?tab=skills&highlight=${encodeURIComponent(skillName)}`);
-  };
-
   const content = (
     <div className='max-w-320px max-h-300px overflow-y-auto'>
       <div className='text-12px font-500 text-t-secondary mb-8px'>
@@ -43,8 +39,7 @@ const ConversationSkillsIndicator: React.FC<ConversationSkillsIndicatorProps> = 
         {loadedSkills.map((skill) => (
           <div
             key={skill.name}
-            className='flex items-center gap-8px py-4px px-8px rounded-4px hover:bg-2 cursor-pointer text-13px text-t-primary truncate'
-            onClick={() => handleSkillClick(skill.name)}
+            className='flex items-center gap-8px py-4px px-8px rounded-4px text-13px text-t-primary truncate'
           >
             {skill.name}
           </div>
